@@ -1,0 +1,28 @@
+{
+  "name": "project-puzzle-backend",
+  "version": "1.0.0",
+  "description": "Backend skeleton for Project Puzzle - Express/Mongo placeholder setup.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "mern",
+    "project-puzzle",
+    "backend",
+    "express",
+    "mongoose"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "mongoose": "^8.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
