@@ -1,0 +1,69 @@
+Project Puzzle — Repository Overview
+===================================
+
+This repository is a structured MERN skeleton designed for task-based work. The
+backend, frontend, utilities, and individual tasks are kept deliberately tidy so
+that each new task can plug into a predictable layout.
+
+Top-level layout
+----------------
+
+- backend/
+  Node/Express API using MongoDB (Mongoose). Initially wired with placeholder
+  logic, then gradually filled in by tasks (for example, Task 001 implements the
+  real Task API under /api/tasks).
+
+- frontend/
+  React application with a simple routing shell (Home, Tasks, Dashboard). The UI
+  starts out with static placeholder content and can be extended by later tasks.
+
+- utilities/
+  Miscellaneous helper scripts and tools that are not tied to a single task.
+
+- tasks/
+  Self-contained task directories. Each task folder (e.g. task-001) includes its
+  own description, tests, and helpers.
+
+- Dockerfile
+  Base Docker image wired to run the backend server. It installs backend
+  dependencies and starts the Express app on port 5000.
+
+- docker-compose.yaml
+  Compose file for local development. It brings up MongoDB and the backend
+  container together, exposing the API on http://localhost:5000.
+
+- run_tests.sh
+  Thin wrapper that delegates to task-level test runners under tasks/. As more
+  tasks are added, this script can be extended to call each one in turn.
+
+- repo_overview.txt
+  This document. A lightweight, human-readable overview of how the pieces fit
+  together.
+
+Basic workflows
+---------------
+
+1. Running the backend directly on your host
+   - cd backend
+   - npm install
+   - npm run dev
+   - The API will be available on http://localhost:5000.
+
+2. Running the backend with Docker Compose
+   - From the repo root:
+     - docker-compose up --build
+   - This starts:
+     - MongoDB on port 27017
+     - The backend API on http://localhost:5000
+
+3. Running tests
+   - From the repo root:
+     - ./run_tests.sh
+   - This script currently forwards to tasks/task-001/run-tests.sh, which in turn
+     runs the Node-based tests defined in tasks/task-001/task_tests.js against
+     the running backend.
+
+As new tasks are introduced, they should live under tasks/ as their own
+subdirectories, each with a task_description.txt, tests, and a small
+run-tests.sh entry point. The goal is to keep the project easy to navigate and
+friendly to both humans and automation.
