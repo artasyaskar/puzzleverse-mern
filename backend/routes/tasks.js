@@ -16,6 +16,7 @@ const {
   createTasksBulk,
   exportTasksCsv,
   updateTaskStatus,
+  archiveTask,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -45,5 +46,7 @@ router.put('/:id', updateTask);
 router.delete('/:id', deleteTask);
 
 router.patch('/:id/status', updateTaskStatus);
+
+router.patch('/:id/archive', archiveTask);
 
 module.exports = router;

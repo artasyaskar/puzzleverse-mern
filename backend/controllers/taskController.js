@@ -16,7 +16,17 @@ const ALLOWED_STATUSES = ['pending', 'in-progress', 'completed'];
 // filtering via the `status` query parameter.
 const getTasks = async (req, res) => {
   try {
-    const { status } = req.query || {};
+    const { status, includeArchived } = req.query || {};
+
+    const filter = {};
+
+    // By default we only return non-archived tasks. When includeArchived is
+    // explicitly set to the string "true", we skip this filter and return all
+    // tasks regardless of archive status.
+    const includeArchivedFlag = includeArchived === 'true';
+    if (!includeArchivedFlag) {
+      filter.archived = false;
+    }
 
     // When a status query parameter is provided, validate it against the
     // set of allowed statuses and apply a filtered query. If the value is
@@ -28,13 +38,10 @@ const getTasks = async (req, res) => {
         });
       }
 
-      const filteredTasks = await Task.find({ status }).sort({ createdAt: -1 });
-      return res.json(filteredTasks);
+      filter.status = status;
     }
 
-    // Default behaviour when no filter is provided: return all tasks,
-    // ordered newest-first.
-    const tasks = await Task.find().sort({ createdAt: -1 });
+    const tasks = await Task.find(filter).sort({ createdAt: -1 });
     return res.json(tasks);
   } catch (error) {
     // In case something unexpected goes wrong when talking to the database,
@@ -488,6 +495,56 @@ const updateTaskStatus = async (req, res) => {
   }
 };
 
+const archiveTask = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  const { archived } = req.body || {};
+
+  if (typeof archived !== 'boolean') {
+    return res.status(400).json({
+      message: 'The archived field is required and must be a boolean.',
+    });
+  }
+
+  try {
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    const now = new Date();
+
+    if (archived) {
+      if (!task.archived) {
+        task.archived = true;
+        task.archivedAt = now;
+      }
+    } else {
+      if (task.archived) {
+        task.archived = false;
+        task.archivedAt = null;
+      }
+    }
+
+    await task.save();
+
+    return res.json(task);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to update archive state for task.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
@@ -498,4 +555,5 @@ module.exports = {
   createTasksBulk,
   exportTasksCsv,
   updateTaskStatus,
+  archiveTask,
 };

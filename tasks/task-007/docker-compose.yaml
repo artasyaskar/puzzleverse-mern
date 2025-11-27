@@ -21,22 +21,16 @@ services:
       - '5007:5000'
     depends_on:
       - mongo
-
   tests:
     image: python:3.11-slim
-    container_name: project-puzzle-tests-task007
     working_dir: /workspace/tasks/task-007
     environment:
-      BACKEND_BASE_URL: http://backend:5000
+      BACKEND_BASE_URL: http://host.docker.internal:5007
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - backend
     volumes:
       - ../..:/workspace:ro
     command: >
       sh -c "pip install --quiet pytest requests && pytest -q task_tests.py"
-
-# Usage from this directory:
-#   docker-compose up --build --abort-on-container-exit --exit-code-from tests tests
-#
-# Typically you will not call this directly; instead, use:
-#   ./run-tests.sh
