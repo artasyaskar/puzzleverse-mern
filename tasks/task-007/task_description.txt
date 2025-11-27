@@ -1,0 +1,115 @@
+task_description: |
+  Task: Introduce a soft-archive workflow for tasks (PATCH /api/tasks/:id/archive)
+  Instructions:
+    Right now tasks are either there or they are gone: the only way to "remove"
+    a task is to hit the delete endpoint and let the database forget about it.
+    In most real projects that is a bit too final. People make mistakes, or they
+    want to temporarily hide a task without throwing it away forever.
+
+    In this task you will add a **soft-archive** flow for tasks. Instead of
+    deleting tasks outright, the API will gain a dedicated endpoint for marking
+    a task as archived (and for un-archiving it later), and the main listing
+    endpoint will learn how to hide archived tasks by default.
+
+    Changes to the data model:
+      - Extend the existing `Task` schema in `backend/models/Task.js` with two
+        new fields:
+        - `archived` (Boolean)
+          - Default: `false`.
+        - `archivedAt` (Date or null)
+          - Default: `null`.
+
+    New endpoint to implement:
+      - HTTP method: `PATCH`
+      - Route: `/api/tasks/:id/archive`
+
+    Request body:
+      - JSON object with a single required field:
+
+          {
+            "archived": true
+          }
+
+      - `archived` must be a boolean.
+
+    Behaviour of the archive endpoint:
+      - If `:id` is not a valid MongoDB ObjectId:
+        - Return HTTP 400 with a JSON body that has a `message` field.
+
+      - If `:id` is a valid ObjectId but no task with that id exists:
+        - Return HTTP 404 with a JSON body that has a `message` field.
+
+      - When `archived` is `true`:
+        - If the task is not already archived:
+          - Set `archived` to `true`.
+          - Set `archivedAt` to the current time.
+        - If the task is already archived:
+          - Leave `archived` and `archivedAt` as they are.
+        - Return HTTP 200 with the updated task document as JSON.
+
+      - When `archived` is `false`:
+        - If the task is currently archived:
+          - Set `archived` to `false`.
+          - Set `archivedAt` back to `null`.
+        - If the task is already not archived:
+          - Leave the fields as they are.
+        - Return HTTP 200 with the updated task document as JSON.
+
+      - If the `archived` field is missing from the request body or is not a
+        boolean:
+        - Return HTTP 400 with a JSON body that includes a `message` field.
+
+    Changes to the listing endpoint (GET /api/tasks):
+      - By default, `GET /api/tasks` should now return **only non-archived
+        tasks**.
+      - Add an optional query parameter:
+
+          includeArchived (string)
+
+        - When `includeArchived` is set to the string `"true"`, the listing
+          endpoint should return **all** tasks, including archived ones.
+        - For any other value (or when missing), it should behave in the
+          default way and only return non-archived tasks.
+      - The existing `status` filter and other behaviour of `GET /api/tasks`
+        should continue to work, but now they operate on the logical view of
+        tasks described above (filtered by `archived` unless instructed
+        otherwise).
+
+    Implementation notes:
+      - Update the `Task` schema in `backend/models/Task.js` to add the two
+        new fields with sensible defaults.
+      - Update the `getTasks` controller in
+        `backend/controllers/taskController.js` to apply an `archived: false`
+        filter by default, and to relax that filter when
+        `includeArchived=true` is present in the query string.
+      - Add a new controller function (for example,
+        `archiveTask`) that implements the logic described above for
+        `PATCH /api/tasks/:id/archive`.
+      - Wire the new controller into `backend/routes/tasks.js` under the
+        `/archive` path so that the full route becomes
+        `/api/tasks/:id/archive`.
+      - Reuse existing patterns for id validation and error responses so the
+        new endpoint feels consistent with the rest of the API.
+
+    How this will be tested:
+      - The tests will spin up MongoDB and the backend for Task 007 using a
+        task-local `docker-compose.yaml`, just like the earlier tasks.
+      - They will create tasks, archive some of them, un-archive others, and
+        verify that:
+        - The archive endpoint returns 200 and correctly updates `archived`
+          and `archivedAt`.
+        - Archived tasks are **not** returned by default from `GET /api/tasks`.
+        - When `includeArchived=true` is provided, the archived tasks appear in
+          the list again.
+        - Invalid ids and invalid/missing `archived` values give the correct
+          400/404 responses.
+
+    Conceptually, this task is about giving your API a more forgiving way of
+    hiding tasks. Instead of making deletion permanent, you introduce a small
+    layer of safety and a clearer story about which tasks are considered "live"
+    at any given moment.
+
+difficulty: hard
+category: Feature
+tags: [node, express, mongodb, backend, soft-delete]
+parser_name: pytest
