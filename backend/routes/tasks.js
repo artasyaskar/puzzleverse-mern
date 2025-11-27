@@ -15,6 +15,7 @@ const {
   searchTasks,
   createTasksBulk,
   exportTasksCsv,
+  updateTaskStatus,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -42,5 +43,7 @@ router.put('/:id', updateTask);
 // DELETE /api/tasks/:id
 // Placeholder endpoint for removing a task.
 router.delete('/:id', deleteTask);
+
+router.patch('/:id/status', updateTaskStatus);
 
 module.exports = router;

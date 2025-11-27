@@ -423,6 +423,71 @@ const exportTasksCsv = async (req, res) => {
   }
 };
 
+const updateTaskStatus = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  const { status } = req.body || {};
+
+  if (typeof status !== 'string') {
+    return res.status(400).json({
+      message: 'Status field is required and must be a string.',
+    });
+  }
+
+  if (!ALLOWED_STATUSES.includes(status)) {
+    return res.status(400).json({
+      message: 'Status value is not valid.',
+    });
+  }
+
+  try {
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    const currentStatus = task.status;
+
+    // Disallow changing away from completed.
+    if (currentStatus === 'completed' && status !== 'completed') {
+      return res.status(409).json({
+        message: 'Cannot change status once a task is completed.',
+      });
+    }
+
+    // Disallow moving backwards from in-progress to pending.
+    if (currentStatus === 'in-progress' && status === 'pending') {
+      return res.status(409).json({
+        message: 'Cannot move a task from in-progress back to pending.',
+      });
+    }
+
+    // If the requested status is the same as the current status, we treat it
+    // as a no-op but still return the current document.
+    if (currentStatus === status) {
+      return res.json(task);
+    }
+
+    task.status = status;
+    await task.save();
+
+    return res.json(task);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to update task status.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
@@ -432,4 +497,5 @@ module.exports = {
   searchTasks,
   createTasksBulk,
   exportTasksCsv,
+  updateTaskStatus,
 };
