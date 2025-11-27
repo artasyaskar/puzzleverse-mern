@@ -169,9 +169,59 @@ const deleteTask = async (req, res) => {
   }
 };
 
+// GET /api/tasks/stats
+// Lightweight aggregation endpoint that reports how many tasks exist in total
+// and how many tasks fall under each allowed status. This keeps the logic
+// simple and pushes heavy lifting down to MongoDB when needed.
+const getTaskStats = async (req, res) => {
+  try {
+    // Fetch counts per status in a single pass using aggregation.
+    const pipeline = [
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ];
+
+    const results = await Task.aggregate(pipeline);
+
+    const byStatus = {};
+    let total = 0;
+
+    // Initialise all known statuses with zero so the shape is predictable
+    // even when the collection is empty.
+    ALLOWED_STATUSES.forEach((status) => {
+      byStatus[status] = 0;
+    });
+
+    for (const row of results) {
+      const status = row._id;
+      const count = row.count || 0;
+
+      if (ALLOWED_STATUSES.includes(status)) {
+        byStatus[status] = count;
+      }
+
+      total += count;
+    }
+
+    return res.json({
+      total,
+      byStatus,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to fetch task statistics.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
   updateTask,
   deleteTask,
+  getTaskStats,
 };

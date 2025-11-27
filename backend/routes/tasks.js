@@ -11,11 +11,16 @@ const {
   createTask,
   updateTask,
   deleteTask,
+  getTaskStats,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
 // Returns a placeholder list of tasks for the time being.
 router.get('/', getTasks);
+
+// GET /api/tasks/stats
+// Returns aggregate information about tasks by status.
+router.get('/stats', getTaskStats);
 
 // POST /api/tasks
 // Will be used to create a new task.
