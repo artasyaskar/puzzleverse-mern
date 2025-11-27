@@ -12,9 +12,28 @@ const ALLOWED_STATUSES = ['pending', 'in-progress', 'completed'];
 // For now this just returns a static placeholder payload.
 // Updated: this now returns the real list of tasks from MongoDB, ordered
 // newest-first by createdAt so that the behaviour is predictable for tests
-// and for anyone consuming the API.
+// and for anyone consuming the API. It also supports optional status-based
+// filtering via the `status` query parameter.
 const getTasks = async (req, res) => {
   try {
+    const { status } = req.query || {};
+
+    // When a status query parameter is provided, validate it against the
+    // set of allowed statuses and apply a filtered query. If the value is
+    // not allowed, return a 400 with a clear error message.
+    if (typeof status !== 'undefined') {
+      if (!ALLOWED_STATUSES.includes(status)) {
+        return res.status(400).json({
+          message: 'Status value is not valid.',
+        });
+      }
+
+      const filteredTasks = await Task.find({ status }).sort({ createdAt: -1 });
+      return res.json(filteredTasks);
+    }
+
+    // Default behaviour when no filter is provided: return all tasks,
+    // ordered newest-first.
     const tasks = await Task.find().sort({ createdAt: -1 });
     return res.json(tasks);
   } catch (error) {
