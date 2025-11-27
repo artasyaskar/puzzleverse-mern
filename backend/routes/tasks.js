@@ -14,6 +14,7 @@ const {
   getTaskStats,
   searchTasks,
   createTasksBulk,
+  exportTasksCsv,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -25,6 +26,8 @@ router.get('/', getTasks);
 router.get('/stats', getTaskStats);
 
 router.get('/search', searchTasks);
+
+router.get('/export', exportTasksCsv);
 
 // POST /api/tasks
 // Will be used to create a new task.

@@ -362,6 +362,67 @@ const createTasksBulk = async (req, res) => {
   }
 };
 
+const exportTasksCsv = async (req, res) => {
+  try {
+    const { status } = req.query || {};
+
+    if (typeof status !== 'undefined') {
+      if (!ALLOWED_STATUSES.includes(status)) {
+        return res.status(400).json({
+          message: 'Status value is not valid.',
+        });
+      }
+    }
+
+    const filter = {};
+    if (typeof status !== 'undefined') {
+      filter.status = status;
+    }
+
+    const tasks = await Task.find(filter).sort({ createdAt: -1 });
+
+    const header = ['id', 'title', 'description', 'status', 'createdAt', 'updatedAt'];
+
+    const escapeCsvField = (value) => {
+      if (value === null || typeof value === 'undefined') {
+        return '';
+      }
+
+      const str = String(value);
+      if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const rows = [header.join(',')];
+
+    tasks.forEach((task) => {
+      const row = [
+        escapeCsvField(task._id),
+        escapeCsvField(task.title),
+        escapeCsvField(task.description),
+        escapeCsvField(task.status),
+        escapeCsvField(task.createdAt && task.createdAt.toISOString()),
+        escapeCsvField(task.updatedAt && task.updatedAt.toISOString()),
+      ];
+
+      rows.push(row.join(','));
+    });
+
+    const csv = rows.join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="tasks.csv"');
+
+    return res.status(200).send(csv);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to export tasks as CSV.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
@@ -370,4 +431,5 @@ module.exports = {
   getTaskStats,
   searchTasks,
   createTasksBulk,
+  exportTasksCsv,
 };
