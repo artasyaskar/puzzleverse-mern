@@ -1,0 +1,53 @@
+task_description: |
+  Task: Implement status-based filtering on GET /api/tasks
+  Instructions:
+    The backend currently exposes a basic Task API under `/api/tasks` using Express and Mongoose.
+    The `GET /api/tasks` handler in `backend/controllers/taskController.js` always returns all
+    tasks from MongoDB, sorted by `createdAt` in descending order, and **ignores any query
+    parameters**.
+
+    For this task, you must extend the existing `GET /api/tasks` endpoint to support **optional
+    status-based filtering** via a query parameter, without breaking the existing behavior when
+    no filter is provided.
+
+    Required behaviour:
+      - When the client calls `GET /api/tasks` **without** a `status` query parameter, the
+        endpoint must continue to return **all tasks**, ordered newest-first by `createdAt`,
+        exactly as it does today.
+
+      - When the client calls `GET /api/tasks?status=<value>`, the API must:
+        - Accept only the existing allowed status values used in the application:
+          `pending`, `in-progress`, `completed`.
+        - If the `status` value is valid, return **only the tasks whose `status` field matches
+          the requested value**. The response must still be ordered newest-first by `createdAt`.
+        - If the `status` value is **not** one of the allowed values, respond with HTTP 400 and
+          a JSON body containing a clear error message string.
+
+    Technical notes and constraints:
+      - The allowed status values are already defined as `ALLOWED_STATUSES` in
+        `backend/controllers/taskController.js`. Reuse this list rather than duplicating the
+        values.
+      - Do not change the existing Task schema fields in `backend/models/Task.js` for this task.
+        You should be able to implement the required behaviour entirely within the `getTasks`
+        controller.
+      - The tests for this task will:
+        - Create multiple tasks with different `status` values using the existing `POST /api/tasks`
+          endpoint.
+        - Call `GET /api/tasks` with and without the `status` query parameter.
+        - Assert that filtered responses only include tasks with the requested status, and that
+          invalid status values yield a 400 response.
+      - The backend will be run inside Docker together with MongoDB. The tests will talk to the
+        API over HTTP and are written in Python using `pytest` and `requests`.
+
+    Success criteria:
+      - All provided tests in `tasks/task-001/task_tests.py` pass when run via the
+        `tasks/task-001/run-tests.sh` script (and from the repo root via `./run_tests.sh`).
+      - The behaviour of `GET /api/tasks` without a `status` query parameter remains unchanged
+        and continues to return all tasks.
+      - The filtering behaviour is implemented cleanly and is easy to understand from reading
+        `taskController.js`.
+
+difficulty: medium
+category: Feature
+tags: [node, express, mongodb, backend]
+parser_name: pytest
