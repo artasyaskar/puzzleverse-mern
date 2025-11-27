@@ -11,11 +11,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-# For now, we only have Task 001 wired up. If its test script is present,
-# we invoke it directly.
-if [ -x "tasks/task-001/run-tests.sh" ]; then
-  echo "Running Task 001 tests..."
-  (cd tasks/task-001 && ./run-tests.sh)
+# Determine which task to run. If no argument is provided, default to task-001
+# to preserve the original behaviour.
+TASK_ID="${1:-task-001}"
+TASK_DIR="tasks/${TASK_ID}"
+
+if [ -x """${TASK_DIR}/run-tests.sh""" ]; then
+  echo "Running ${TASK_ID} tests..."
+  (cd "${TASK_DIR}" && ./run-tests.sh)
 else
-  echo "No runnable task test scripts found yet. Add tasks/*/run-tests.sh to extend this." >&2
+  echo "No runnable test script found for task id '${TASK_ID}'. " \
+    "Expected an executable ${TASK_DIR}/run-tests.sh" >&2
+  exit 1
 fi
