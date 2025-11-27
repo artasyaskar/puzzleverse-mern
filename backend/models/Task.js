@@ -22,36 +22,6 @@ const TaskSchema = new mongoose.Schema(
       enum: ['pending', 'in-progress', 'completed'],
       default: 'pending',
     },
-    archived: {
-      type: Boolean,
-      default: false,
-    },
-    archivedAt: {
-      type: Date,
-      default: null,
-    },
-    labels: {
-      type: [String],
-      default: [],
-    },
-    comments: [
-      {
-        message: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        createdAt: {
-          type: Date,
-          required: true,
-          default: Date.now,
-        },
-      },
-    ],
-    dueDate: {
-      type: Date,
-      default: null,
-    },
   },
   {
     timestamps: true, // Handy for tracking creation/update even during early development.

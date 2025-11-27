@@ -11,38 +11,15 @@ const {
   createTask,
   updateTask,
   deleteTask,
-  getTaskStats,
-  searchTasks,
-  createTasksBulk,
-  exportTasksCsv,
-  updateTaskStatus,
-  archiveTask,
-  updateTaskDueDate,
-  getOverdueTasks,
-  updateTaskLabels,
-  addTaskComment,
-  getTaskComments,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
 // Returns a placeholder list of tasks for the time being.
 router.get('/', getTasks);
 
-// GET /api/tasks/stats
-// Returns aggregate information about tasks by status.
-router.get('/stats', getTaskStats);
-
-router.get('/search', searchTasks);
-
-router.get('/export', exportTasksCsv);
-
-router.get('/overdue', getOverdueTasks);
-
 // POST /api/tasks
 // Will be used to create a new task.
 router.post('/', createTask);
-
-router.post('/bulk', createTasksBulk);
 
 // PUT /api/tasks/:id
 // Placeholder endpoint for updating an existing task.
@@ -51,17 +28,5 @@ router.put('/:id', updateTask);
 // DELETE /api/tasks/:id
 // Placeholder endpoint for removing a task.
 router.delete('/:id', deleteTask);
-
-router.patch('/:id/status', updateTaskStatus);
-
-router.patch('/:id/archive', archiveTask);
-
-router.patch('/:id/due-date', updateTaskDueDate);
-
-router.patch('/:id/labels', updateTaskLabels);
-
-router.post('/:id/comments', addTaskComment);
-
-router.get('/:id/comments', getTaskComments);
 
 module.exports = router;
