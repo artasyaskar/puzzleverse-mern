@@ -16,7 +16,7 @@ const ALLOWED_STATUSES = ['pending', 'in-progress', 'completed'];
 // filtering via the `status` query parameter.
 const getTasks = async (req, res) => {
   try {
-    const { status, includeArchived } = req.query || {};
+    const { status, includeArchived, label } = req.query || {};
 
     const filter = {};
 
@@ -39,6 +39,13 @@ const getTasks = async (req, res) => {
       }
 
       filter.status = status;
+    }
+
+    if (typeof label !== 'undefined') {
+      // We treat the label query as an exact match against the stored labels
+      // array. Labels themselves are trimmed when stored, so we simply match
+      // the provided value as-is here.
+      filter.labels = label;
     }
 
     const tasks = await Task.find(filter).sort({ createdAt: -1 });
@@ -622,6 +629,74 @@ const getOverdueTasks = async (req, res) => {
   }
 };
 
+const updateTaskLabels = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  const body = req.body || {};
+
+  if (!Object.prototype.hasOwnProperty.call(body, 'labels')) {
+    return res.status(400).json({
+      message: 'The labels field is required and must be an array of strings.',
+    });
+  }
+
+  const { labels } = body;
+
+  if (!Array.isArray(labels)) {
+    return res.status(400).json({
+      message: 'The labels field is required and must be an array of strings.',
+    });
+  }
+
+  const cleaned = [];
+  const seen = new Set();
+
+  for (const raw of labels) {
+    if (typeof raw !== 'string') {
+      return res.status(400).json({
+        message: 'The labels field is required and must be an array of strings.',
+      });
+    }
+
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    if (seen.has(trimmed)) {
+      continue;
+    }
+
+    seen.add(trimmed);
+    cleaned.push(trimmed);
+  }
+
+  try {
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    task.labels = cleaned;
+    await task.save();
+
+    return res.json(task);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to update task labels.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
@@ -635,4 +710,5 @@ module.exports = {
   archiveTask,
   updateTaskDueDate,
   getOverdueTasks,
+  updateTaskLabels,
 };

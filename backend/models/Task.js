@@ -30,6 +30,10 @@ const TaskSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    labels: {
+      type: [String],
+      default: [],
+    },
     dueDate: {
       type: Date,
       default: null,

@@ -19,6 +19,7 @@ const {
   archiveTask,
   updateTaskDueDate,
   getOverdueTasks,
+  updateTaskLabels,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -54,5 +55,7 @@ router.patch('/:id/status', updateTaskStatus);
 router.patch('/:id/archive', archiveTask);
 
 router.patch('/:id/due-date', updateTaskDueDate);
+
+router.patch('/:id/labels', updateTaskLabels);
 
 module.exports = router;
