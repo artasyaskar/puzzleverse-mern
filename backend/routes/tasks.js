@@ -13,6 +13,7 @@ const {
   deleteTask,
   getTaskStats,
   searchTasks,
+  createTasksBulk,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -28,6 +29,8 @@ router.get('/search', searchTasks);
 // POST /api/tasks
 // Will be used to create a new task.
 router.post('/', createTask);
+
+router.post('/bulk', createTasksBulk);
 
 // PUT /api/tasks/:id
 // Placeholder endpoint for updating an existing task.

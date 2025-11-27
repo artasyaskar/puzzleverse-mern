@@ -1,0 +1,102 @@
+diff --git a/backend/controllers/taskController.js b/backend/controllers/taskController.js
+index 1b018f6..791f75a 100644
+--- a/backend/controllers/taskController.js
++++ b/backend/controllers/taskController.js
+@@ -298,6 +298,70 @@ const searchTasks = async (req, res) => {
+   }
+ };
+ 
++const createTasksBulk = async (req, res) => {
++  try {
++    const { tasks } = req.body || {};
++
++    if (!Array.isArray(tasks)) {
++      return res.status(400).json({
++        message: 'The "tasks" field is required and must be an array.',
++      });
++    }
++
++    if (tasks.length === 0) {
++      return res.status(400).json({
++        message: 'The tasks array must contain at least one task.',
++      });
++    }
++
++    if (tasks.length > 50) {
++      return res.status(400).json({
++        message: 'The tasks array cannot contain more than 50 tasks.',
++      });
++    }
++
++    const documentsToInsert = [];
++
++    for (const rawTask of tasks) {
++      const title = typeof rawTask.title === 'string' ? rawTask.title.trim() : '';
++      const description =
++        typeof rawTask.description === 'string' ? rawTask.description : '';
++      const status = rawTask.status;
++
++      if (!title) {
++        return res.status(400).json({
++          message: 'Each task must have a non-empty title.',
++        });
++      }
++
++      if (typeof status !== 'undefined' && !ALLOWED_STATUSES.includes(status)) {
++        return res.status(400).json({
++          message: 'One or more tasks have an invalid status.',
++        });
++      }
++
++      const doc = {
++        title,
++        description,
++      };
++
++      if (typeof status !== 'undefined') {
++        doc.status = status;
++      }
++
++      documentsToInsert.push(doc);
++    }
++
++    const created = await Task.insertMany(documentsToInsert);
++
++    return res.status(201).json(created);
++  } catch (error) {
++    return res.status(500).json({
++      message: 'Failed to create tasks in bulk.',
++    });
++  }
++};
++
+ module.exports = {
+   getTasks,
+   createTask,
+@@ -305,4 +369,5 @@ module.exports = {
+   deleteTask,
+   getTaskStats,
+   searchTasks,
++  createTasksBulk,
+ };
+diff --git a/backend/routes/tasks.js b/backend/routes/tasks.js
+index 506cc63..938593b 100644
+--- a/backend/routes/tasks.js
++++ b/backend/routes/tasks.js
+@@ -13,6 +13,7 @@ const {
+   deleteTask,
+   getTaskStats,
+   searchTasks,
++  createTasksBulk,
+ } = require('../controllers/taskController');
+ 
+ // GET /api/tasks
+@@ -29,6 +30,8 @@ router.get('/search', searchTasks);
+ // Will be used to create a new task.
+ router.post('/', createTask);
+ 
++router.post('/bulk', createTasksBulk);
++
+ // PUT /api/tasks/:id
+ // Placeholder endpoint for updating an existing task.
+ router.put('/:id', updateTask);
