@@ -17,6 +17,8 @@ const {
   exportTasksCsv,
   updateTaskStatus,
   archiveTask,
+  updateTaskDueDate,
+  getOverdueTasks,
 } = require('../controllers/taskController');
 
 // GET /api/tasks
@@ -30,6 +32,8 @@ router.get('/stats', getTaskStats);
 router.get('/search', searchTasks);
 
 router.get('/export', exportTasksCsv);
+
+router.get('/overdue', getOverdueTasks);
 
 // POST /api/tasks
 // Will be used to create a new task.
@@ -48,5 +52,7 @@ router.delete('/:id', deleteTask);
 router.patch('/:id/status', updateTaskStatus);
 
 router.patch('/:id/archive', archiveTask);
+
+router.patch('/:id/due-date', updateTaskDueDate);
 
 module.exports = router;

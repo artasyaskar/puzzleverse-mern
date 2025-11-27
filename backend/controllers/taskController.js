@@ -545,6 +545,83 @@ const archiveTask = async (req, res) => {
   }
 };
 
+const updateTaskDueDate = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  const { dueDate } = req.body || {};
+
+  // Allow explicit null to clear the due date. For any non-null value we
+  // require a valid ISO-8601 string that can be parsed into a Date.
+  let parsedDate;
+
+  if (dueDate === null) {
+    parsedDate = null;
+  } else {
+    if (typeof dueDate === 'undefined') {
+      return res.status(400).json({
+        message: 'dueDate field is required (use null to clear it).',
+      });
+    }
+
+    if (typeof dueDate !== 'string') {
+      return res.status(400).json({
+        message: 'dueDate must be an ISO 8601 string or null.',
+      });
+    }
+
+    const candidate = new Date(dueDate);
+    if (Number.isNaN(candidate.getTime())) {
+      return res.status(400).json({
+        message: 'dueDate value is not a valid date.',
+      });
+    }
+
+    parsedDate = candidate;
+  }
+
+  try {
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    task.dueDate = parsedDate;
+    await task.save();
+
+    return res.json(task);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to update task due date.',
+    });
+  }
+};
+
+const getOverdueTasks = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const overdueTasks = await Task.find({
+      dueDate: { $ne: null, $lt: now },
+      archived: false,
+    }).sort({ dueDate: 1 });
+
+    return res.json(overdueTasks);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to fetch overdue tasks.',
+    });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
@@ -556,4 +633,6 @@ module.exports = {
   exportTasksCsv,
   updateTaskStatus,
   archiveTask,
+  updateTaskDueDate,
+  getOverdueTasks,
 };

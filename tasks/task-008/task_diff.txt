@@ -1,0 +1,139 @@
+diff --git a/backend/controllers/taskController.js b/backend/controllers/taskController.js
+index 5b4e473..f891100 100644
+--- a/backend/controllers/taskController.js
++++ b/backend/controllers/taskController.js
+@@ -545,6 +545,83 @@ const archiveTask = async (req, res) => {
+   }
+ };
+ 
++const updateTaskDueDate = async (req, res) => {
++  const { id } = req.params;
++
++  if (!mongoose.isValidObjectId(id)) {
++    return res.status(400).json({
++      message: 'Invalid task id.',
++    });
++  }
++
++  const { dueDate } = req.body || {};
++
++  // Allow explicit null to clear the due date. For any non-null value we
++  // require a valid ISO-8601 string that can be parsed into a Date.
++  let parsedDate;
++
++  if (dueDate === null) {
++    parsedDate = null;
++  } else {
++    if (typeof dueDate === 'undefined') {
++      return res.status(400).json({
++        message: 'dueDate field is required (use null to clear it).',
++      });
++    }
++
++    if (typeof dueDate !== 'string') {
++      return res.status(400).json({
++        message: 'dueDate must be an ISO 8601 string or null.',
++      });
++    }
++
++    const candidate = new Date(dueDate);
++    if (Number.isNaN(candidate.getTime())) {
++      return res.status(400).json({
++        message: 'dueDate value is not a valid date.',
++      });
++    }
++
++    parsedDate = candidate;
++  }
++
++  try {
++    const task = await Task.findById(id);
++
++    if (!task) {
++      return res.status(404).json({
++        message: 'Task not found.',
++      });
++    }
++
++    task.dueDate = parsedDate;
++    await task.save();
++
++    return res.json(task);
++  } catch (error) {
++    return res.status(500).json({
++      message: 'Failed to update task due date.',
++    });
++  }
++};
++
++const getOverdueTasks = async (req, res) => {
++  try {
++    const now = new Date();
++
++    const overdueTasks = await Task.find({
++      dueDate: { $ne: null, $lt: now },
++      archived: false,
++    }).sort({ dueDate: 1 });
++
++    return res.json(overdueTasks);
++  } catch (error) {
++    return res.status(500).json({
++      message: 'Failed to fetch overdue tasks.',
++    });
++  }
++};
++
+ module.exports = {
+   getTasks,
+   createTask,
+@@ -556,4 +633,6 @@ module.exports = {
+   exportTasksCsv,
+   updateTaskStatus,
+   archiveTask,
++  updateTaskDueDate,
++  getOverdueTasks,
+ };
+diff --git a/backend/models/Task.js b/backend/models/Task.js
+index 5ca9d73..f0b77b5 100644
+--- a/backend/models/Task.js
++++ b/backend/models/Task.js
+@@ -30,6 +30,10 @@ const TaskSchema = new mongoose.Schema(
+       type: Date,
+       default: null,
+     },
++    dueDate: {
++      type: Date,
++      default: null,
++    },
+   },
+   {
+     timestamps: true, // Handy for tracking creation/update even during early development.
+diff --git a/backend/routes/tasks.js b/backend/routes/tasks.js
+index f29ffac..8a16701 100644
+--- a/backend/routes/tasks.js
++++ b/backend/routes/tasks.js
+@@ -17,6 +17,8 @@ const {
+   exportTasksCsv,
+   updateTaskStatus,
+   archiveTask,
++  updateTaskDueDate,
++  getOverdueTasks,
+ } = require('../controllers/taskController');
+ 
+ // GET /api/tasks
+@@ -31,6 +33,8 @@ router.get('/search', searchTasks);
+ 
+ router.get('/export', exportTasksCsv);
+ 
++router.get('/overdue', getOverdueTasks);
++
+ // POST /api/tasks
+ // Will be used to create a new task.
+ router.post('/', createTask);
+@@ -49,4 +53,6 @@ router.patch('/:id/status', updateTaskStatus);
+ 
+ router.patch('/:id/archive', archiveTask);
+ 
++router.patch('/:id/due-date', updateTaskDueDate);
++
+ module.exports = router;
