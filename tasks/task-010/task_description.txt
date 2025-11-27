@@ -1,0 +1,120 @@
+task_description: |
+  Task: Add a simple comment log for tasks (POST /api/tasks/:id/comments, GET /api/tasks/:id/comments)
+  Instructions:
+    Right now, tasks carry core fields like title, description, status, due
+    dates, labels, and archive state. That is great for planning, but it does
+    not capture the little back-and-forth updates people usually add while
+    working: "blocked by design", "talked to QA", or "client approved".
+
+    In this task you will add a very small, append-only **comment log** for
+    each task, exposed via its own pair of endpoints. The goal is to keep the
+    shape simple enough for training an API consumer, but realistic enough that
+    it feels like something a real team might rely on.
+
+    1. Extend the Task model with comments
+
+      - In `backend/models/Task.js`, add a new `comments` field to the schema.
+
+        Each comment should have:
+          - `message`: string (required)
+          - `createdAt`: Date (required)
+
+        For this exercise, you can model this as an array of subdocuments:
+
+          comments: [
+            {
+              message: String,
+              createdAt: Date,
+            },
+            ...
+          ]
+
+        You do not need separate ObjectIds for individual comments.
+
+    2. New endpoint: append a comment to a task
+
+      - HTTP method: `POST`
+      - Route: `/api/tasks/:id/comments`
+
+      Request body:
+        - JSON object with a single field:
+
+            {
+              "message": "Talked to QA about edge case handling."
+            }
+
+      Behaviour:
+        - If `:id` is not a valid MongoDB ObjectId:
+          - Return HTTP 400 with a JSON body containing a `message` field.
+
+        - If `:id` is a valid ObjectId but no task with that id exists:
+          - Return HTTP 404 with a JSON body containing a `message` field.
+
+        - If `message` is missing, not a string, or only whitespace after
+          trimming:
+          - Return HTTP 400 with a JSON body containing a `message` field.
+
+        - On success:
+          - Create a new comment object with:
+              - `message`: the trimmed message string.
+              - `createdAt`: the current server time.
+          - Append it to the task’s `comments` array.
+          - Persist the updated task.
+          - Return HTTP 201 with the newly created comment as JSON. It is fine
+            if you also include the task id alongside the comment fields.
+
+    3. New endpoint: list comments for a task
+
+      - HTTP method: `GET`
+      - Route: `/api/tasks/:id/comments`
+
+      Behaviour:
+        - If `:id` is not a valid MongoDB ObjectId:
+          - Return HTTP 400 with a JSON body containing a `message` field.
+
+        - If `:id` is valid but there is no task with that id:
+          - Return HTTP 404 with a JSON body containing a `message` field.
+
+        - On success:
+          - Return HTTP 200 and a JSON array of comment objects.
+          - Sorting: it is reasonable and helpful to return comments sorted by
+            `createdAt` ascending (oldest first), so that they read like a
+            simple timeline.
+          - When a task has no comments yet, return an empty list `[]`.
+
+    4. Implementation notes
+
+      - Update `backend/models/Task.js` to include the `comments` array with an
+        appropriate subdocument schema for `message` and `createdAt`.
+      - Add two new controllers in `backend/controllers/taskController.js`:
+        - One for handling `POST /api/tasks/:id/comments` (for example,
+          `addTaskComment`).
+        - One for handling `GET /api/tasks/:id/comments` (for example,
+          `getTaskComments`).
+      - Wire these controllers into `backend/routes/tasks.js` so that they
+        become part of the `/api/tasks` router.
+      - Reuse the existing conventions for id validation and error responses so
+        that the new endpoints behave consistently alongside the rest of the
+        API.
+
+    5. How this will be tested
+
+      - The tests for this task will:
+        - Spin up MongoDB and the backend via a task-local `docker-compose.yaml`.
+        - Create tasks using `POST /api/tasks`.
+        - Append comments with `POST /api/tasks/:id/comments`.
+        - List comments with `GET /api/tasks/:id/comments`.
+        - Verify that invalid ids and invalid payloads return 400/404 with
+          `message` fields.
+        - Check that comments are stored in order and that the `message`
+          content is trimmed correctly.
+
+    You can think of this feature as giving each task a tiny, append-only
+    journal. It should be straightforward to build a “comment thread” view on
+    top of it in a frontend, and it gives the backend just enough structure to
+    be interesting without turning into a full-blown discussion system.
+
+difficulty: hard
+category: Feature
+tags: [node, express, mongodb, backend, comments]
+parser_name: pytest
