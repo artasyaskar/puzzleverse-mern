@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:6
+    container_name: project-puzzle-mongo-task002
+    restart: unless-stopped
+    ports:
+      - '27019:27017'
+    environment:
+      MONGO_INITDB_DATABASE: project-puzzle-task002
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: project-puzzle-backend-task002
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/project-puzzle-task002
+    ports:
+      - '5002:5000'
+    depends_on:
+      - mongo
+
+  tests:
+    image: python:3.11-slim
+    container_name: project-puzzle-tests-task002
+    working_dir: /workspace/tasks/task-002
+    environment:
+      BACKEND_BASE_URL: http://backend:5000
+    depends_on:
+      - backend
+    volumes:
+      - ../..:/workspace:ro
+    command: >
+      sh -c "pip install --quiet pytest requests && pytest -q task_tests.py"
+
+# Usage from this directory:
+#   docker-compose up --build --abort-on-container-exit --exit-code-from tests tests
+#
+# Typically you will not call this directly; instead, use:
+#   ./run-tests.sh
