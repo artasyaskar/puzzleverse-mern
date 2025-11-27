@@ -1,0 +1,104 @@
+task_description: |
+  Task: Add a dedicated status transition endpoint (PATCH /api/tasks/:id/status)
+  Instructions:
+    Up to now the API lets you update a task in one shot with `PUT /api/tasks/:id`.
+    That works, but it does not make it very clear how status changes should
+    behave over time. For example, can a task jump straight from `pending` to
+    `completed`? Can you move a `completed` task back to `pending`?
+
+    In this task you will introduce a **separate** endpoint whose only job is
+    to update the `status` field of a task, and you will enforce a simple set
+    of rules about how that status is allowed to change.
+
+    New endpoint to implement:
+      - HTTP method: `PATCH`
+      - Route: `/api/tasks/:id/status`
+
+    Request body:
+      - JSON object with a single required field:
+
+          {
+            "status": "in-progress"
+          }
+
+    Allowed status values:
+      - The same three values used in the rest of the backend:
+        - `pending`
+        - `in-progress`
+        - `completed`
+
+    Status transition rules:
+      - A task starts out in `pending` by default.
+      - From `pending` you may move to:
+        - `in-progress`
+        - `completed`
+      - From `in-progress` you may move to:
+        - `completed`
+      - From `completed` you may **not** move to any other status. Once a task
+        is completed it is considered final for the purpose of this task.
+
+    Behaviour details:
+      - When the client sends a valid ObjectId, the task exists, the requested
+        `status` is one of the allowed values, and the transition is allowed
+        under the rules above:
+        - Update the task’s status.
+        - Return HTTP 200.
+        - Respond with the updated Task document as JSON (same shape as other
+          endpoints that return a single task).
+
+      - When the `status` value in the request body is missing or not one of
+        the allowed values:
+        - Return HTTP 400.
+        - Include a short `message` field in the JSON response explaining that
+          the status is invalid or missing.
+
+      - When the task id in the URL is not a valid MongoDB ObjectId:
+        - Return HTTP 400 with a JSON body containing a `message` field.
+
+      - When the id is a valid ObjectId but no task with that id exists:
+        - Return HTTP 404 with a JSON body containing a `message` field.
+
+      - When the requested transition would violate the rules above (for
+        example, trying to move from `completed` back to `pending`, or from
+        `in-progress` back to `pending`):
+        - Return HTTP 409 (Conflict).
+        - Include a JSON body with a clear `message` describing that the
+          transition is not allowed.
+
+    Implementation notes:
+      - Add a new controller function in
+        `backend/controllers/taskController.js` (for example,
+        `updateTaskStatus`) that encapsulates this logic.
+      - Reuse `ALLOWED_STATUSES` and the existing `Task` model so the set of
+        allowed status values stays consistent across the codebase.
+      - Use `mongoose.isValidObjectId` to validate the `:id` parameter before
+        querying the database.
+      - Use `findById` or `findByIdAndUpdate` as you prefer, but make sure you
+        can inspect the current status so you can enforce the transition
+        rules.
+      - Do not weaken or change the behaviour of the existing `PUT
+        /api/tasks/:id` endpoint; this new route is additive and focused
+        purely on status changes.
+
+    How this will be tested:
+      - The tests will bring up MongoDB and the backend using a
+        task-local `docker-compose.yaml` file, just like in the previous
+        tasks.
+      - They will create tasks in different states using the existing
+        `POST /api/tasks` endpoint, then call
+        `PATCH /api/tasks/:id/status` with various payloads and check:
+        - That allowed transitions succeed and return the updated document.
+        - That disallowed transitions return 409 and do not change the stored
+          status.
+        - That invalid ids and invalid status values produce 400/404 as
+          described above.
+
+    Think of this as making the lifecycle of a task explicit: instead of
+    silently accepting any status change through a general update endpoint,
+    you draw a clear line around what is and is not allowed, and you surface
+    that through a dedicated route.
+
+difficulty: hard
+category: Feature
+tags: [node, express, mongodb, backend, workflow]
+parser_name: pytest
