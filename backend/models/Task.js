@@ -34,6 +34,20 @@ const TaskSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    comments: [
+      {
+        message: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        createdAt: {
+          type: Date,
+          required: true,
+          default: Date.now,
+        },
+      },
+    ],
     dueDate: {
       type: Date,
       default: null,

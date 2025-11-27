@@ -1,0 +1,151 @@
+diff --git a/backend/controllers/taskController.js b/backend/controllers/taskController.js
+index 08ff1fe..d21d23b 100644
+--- a/backend/controllers/taskController.js
++++ b/backend/controllers/taskController.js
+@@ -629,6 +629,91 @@ const getOverdueTasks = async (req, res) => {
+   }
+ };
+ 
++const addTaskComment = async (req, res) => {
++  const { id } = req.params;
++
++  if (!mongoose.isValidObjectId(id)) {
++    return res.status(400).json({
++      message: 'Invalid task id.',
++    });
++  }
++
++  const { message } = req.body || {};
++
++  if (typeof message !== 'string') {
++    return res.status(400).json({
++      message: 'The message field is required and must be a string.',
++    });
++  }
++
++  const trimmed = message.trim();
++  if (!trimmed) {
++    return res.status(400).json({
++      message: 'The message field must not be empty.',
++    });
++  }
++
++  try {
++    const task = await Task.findById(id);
++
++    if (!task) {
++      return res.status(404).json({
++        message: 'Task not found.',
++      });
++    }
++
++    const comment = {
++      message: trimmed,
++      createdAt: new Date(),
++    };
++
++    if (!Array.isArray(task.comments)) {
++      task.comments = [];
++    }
++
++    task.comments.push(comment);
++    await task.save();
++
++    return res.status(201).json(comment);
++  } catch (error) {
++    return res.status(500).json({
++      message: 'Failed to add comment to task.',
++    });
++  }
++};
++
++const getTaskComments = async (req, res) => {
++  const { id } = req.params;
++
++  if (!mongoose.isValidObjectId(id)) {
++    return res.status(400).json({
++      message: 'Invalid task id.',
++    });
++  }
++
++  try {
++    const task = await Task.findById(id).select('comments');
++
++    if (!task) {
++      return res.status(404).json({
++        message: 'Task not found.',
++      });
++    }
++
++    const comments = Array.isArray(task.comments) ? task.comments : [];
++
++    const sorted = comments
++      .slice()
++      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
++
++    return res.json(sorted);
++  } catch (error) {
++    return res.status(500).json({
++      message: 'Failed to fetch task comments.',
++    });
++  }
++};
++
+ const updateTaskLabels = async (req, res) => {
+   const { id } = req.params;
+ 
+@@ -710,5 +795,7 @@ module.exports = {
+   archiveTask,
+   updateTaskDueDate,
+   getOverdueTasks,
++  addTaskComment,
++  getTaskComments,
+   updateTaskLabels,
+ };
+diff --git a/backend/models/Task.js b/backend/models/Task.js
+index e2e767e..c96ba5b 100644
+--- a/backend/models/Task.js
++++ b/backend/models/Task.js
+@@ -34,6 +34,20 @@ const TaskSchema = new mongoose.Schema(
+       type: [String],
+       default: [],
+     },
++    comments: [
++      {
++        message: {
++          type: String,
++          required: true,
++          trim: true,
++        },
++        createdAt: {
++          type: Date,
++          required: true,
++          default: Date.now,
++        },
++      },
++    ],
+     dueDate: {
+       type: Date,
+       default: null,
+diff --git a/backend/routes/tasks.js b/backend/routes/tasks.js
+index 1bcd348..47d445a 100644
+--- a/backend/routes/tasks.js
++++ b/backend/routes/tasks.js
+@@ -20,6 +20,8 @@ const {
+   updateTaskDueDate,
+   getOverdueTasks,
+   updateTaskLabels,
++  addTaskComment,
++  getTaskComments,
+ } = require('../controllers/taskController');
+ 
+ // GET /api/tasks
+@@ -58,4 +60,8 @@ router.patch('/:id/due-date', updateTaskDueDate);
+ 
+ router.patch('/:id/labels', updateTaskLabels);
+ 
++router.post('/:id/comments', addTaskComment);
++
++router.get('/:id/comments', getTaskComments);
++
+ module.exports = router;

@@ -629,6 +629,91 @@ const getOverdueTasks = async (req, res) => {
   }
 };
 
+const addTaskComment = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  const { message } = req.body || {};
+
+  if (typeof message !== 'string') {
+    return res.status(400).json({
+      message: 'The message field is required and must be a string.',
+    });
+  }
+
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return res.status(400).json({
+      message: 'The message field must not be empty.',
+    });
+  }
+
+  try {
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    const comment = {
+      message: trimmed,
+      createdAt: new Date(),
+    };
+
+    if (!Array.isArray(task.comments)) {
+      task.comments = [];
+    }
+
+    task.comments.push(comment);
+    await task.save();
+
+    return res.status(201).json(comment);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to add comment to task.',
+    });
+  }
+};
+
+const getTaskComments = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
+      message: 'Invalid task id.',
+    });
+  }
+
+  try {
+    const task = await Task.findById(id).select('comments');
+
+    if (!task) {
+      return res.status(404).json({
+        message: 'Task not found.',
+      });
+    }
+
+    const comments = Array.isArray(task.comments) ? task.comments : [];
+
+    const sorted = comments
+      .slice()
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    return res.json(sorted);
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to fetch task comments.',
+    });
+  }
+};
+
 const updateTaskLabels = async (req, res) => {
   const { id } = req.params;
 
@@ -710,5 +795,7 @@ module.exports = {
   archiveTask,
   updateTaskDueDate,
   getOverdueTasks,
+  addTaskComment,
+  getTaskComments,
   updateTaskLabels,
 };
