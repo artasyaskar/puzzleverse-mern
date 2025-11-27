@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # MongoDB service
+  mongodb:
+    image: mongo:5.0
+    container_name: task-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=taskdb
+    volumes:
+      - mongodb_data:/data/db
+
+  # Backend service
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.dev
+    container_name: task-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongodb:27017/taskdb
+    depends_on:
+      - mongodb
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+
+  # Test runner service
+  test-runner:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.test
+    container_name: task-test-runner
+    environment:
+      - NODE_ENV=test
+      - MONGODB_URI=mongodb://mongodb:27017/taskdb_test
+    depends_on:
+      - mongodb
+    volumes:
+      - ../../backend:/app
+      - /app/node_modules
+    command: ["sh", "-c", "npm install && python3 /app/tasks/task-001/task_tests.py"]
+
+volumes:
+  mongodb_data:
