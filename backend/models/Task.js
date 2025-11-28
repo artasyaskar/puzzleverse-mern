@@ -9,7 +9,7 @@ const TaskSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: false, // Will likely become required once real logic is in place.
+      required: true,
       trim: true,
     },
     description: {
