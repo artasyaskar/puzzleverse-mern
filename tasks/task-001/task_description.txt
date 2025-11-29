@@ -1,0 +1,57 @@
+task_description: |
+Task: Ship production-grade authentication for the MERN starter
+Instructions:
+You're stepping in as the engineer to give this bare-bones starter a real, production-ready authentication system. Think of it as building the front door, the doorman, and the guestbook—all reliable, secure, and predictable.
+
+What you’ll build (server-side, Node/Express):
+- A minimal in-memory user store with fields: id, email, passwordHash, createdAt.
+- Password hashing using a strong algorithm (bcrypt or argon2). Never store plain text.
+- Endpoints under /api/auth:
+  - POST /register: create a user. Reject duplicates (email unique, case-insensitive). Validate email and password (>= 8 chars, at least one letter and one number). Return { id, email } on success, 201.
+  - POST /login: verify credentials. On success, issue:
+    - a short-lived access token (JWT) and
+    - a long-lived refresh token (opaque random string).
+    Return { accessToken, refreshToken, user: { id, email } }, 200.
+  - POST /refresh: exchange a valid refresh token for a new access token. Refresh tokens should be one-time use (rotate on refresh). Return { accessToken, refreshToken }.
+  - POST /logout: revoke the provided refresh token so it can’t be used again. Idempotent.
+- Protected sample endpoint:
+  - GET /api/me: requires a valid access token (Authorization: Bearer <token>). Returns { id, email } for the authenticated user.
+- Rate limiting:
+  - For POST /login only: allow at most 5 attempts per IP per 60 seconds. After that, respond 429 with a friendly message.
+- Validation & errors:
+  - All validation failures should return 400 with a helpful, human-readable message.
+  - Authentication failures return 401 (invalid credentials, invalid/missing access token).
+  - Rate limit exceeded returns 429.
+
+Important behaviors the tests will rely on:
+- Emails are treated case-insensitively for uniqueness and login.
+- Passwords are never returned in any response.
+- Access token validity window should be short (it’s okay to simulate 5 minutes). We won’t wait in real time; you just need to set claims accordingly.
+- Refresh tokens are persisted in-memory (per-process) with rotation: using a refresh token invalidates it and returns a new one.
+- Logout revokes the provided refresh token without impacting other tokens.
+
+Technical requirements:
+- Keep it simple: no DB required—store users and refresh tokens in memory data structures.
+- Implement clean separation in server/src:
+  - server/src/auth/service.js: user storage, hashing, token issue/verify/rotate/revoke
+  - server/src/auth/routes.js: express routes and input validation
+  - server/src/middleware/rateLimit.js: simple IP-based sliding window or fixed window for /login
+  - server/src/index.js: wire routes and middleware
+- Use JWT for access tokens (HS256) with a secret sourced from process.env.JWT_SECRET (fallback safe default allowed for tests).
+- Use strong password hashing (bcrypt or argon2). Choose one and stick with it.
+- No UI changes are required.
+
+Success criteria (what passing looks like):
+- All tests in tasks/task-001/task_tests.py pass.
+- The app still builds and the health endpoint remains intact.
+- Code is clean, easy to follow, and handles edge cases called out above.
+
+Tips:
+- Be thoughtful with status codes and messages; the tests read both.
+- Keep functions small and focused—services should be reusable and testable.
+- Treat refresh tokens as secrets. Never log them.
+ 
+difficulty: hard
+category: Feature
+tags: [node, express, auth]
+parser_name: pytest

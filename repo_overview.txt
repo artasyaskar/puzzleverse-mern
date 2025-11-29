@@ -1,0 +1,17 @@
+Project: PuzzleVerse MERN Starter
+
+Overview:
+- Full-stack MERN app with Vite React client and Express server.
+- Structured for IDE Arena grading with tasks folder, Dockerfile, docker-compose.yaml, and run_tests.sh.
+
+How to run locally:
+- npm ci
+- npm run build -w client
+- npm start (serves API and static client on http://localhost:3000)
+
+How to run tests for a task:
+- ./run_tests.sh <task-id>
+
+Docker:
+- docker compose build
+- docker compose run --rm -e TASK_ID=<task-id> app

@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  app:
+    build: ../..
+    image: puzzle/puzzleverse-mern:latest
+    environment:
+      - TASK_ID=task-001
+      - BASE_URL=http://localhost:3000
+      - JWT_SECRET=dev-secret
+    command: ["./tasks/task-001/run-tests.sh"]
