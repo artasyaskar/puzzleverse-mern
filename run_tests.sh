@@ -11,7 +11,18 @@ if [ -z "$TASK_ID" ]; then
 fi
 
 # Ensure Node dependencies are installed locally (for non-Docker runs)
+NEED_NPM_INSTALL=false
 if [ ! -d "node_modules" ] || [ ! -d "server/node_modules" ] || [ ! -d "client/node_modules" ]; then
+  NEED_NPM_INSTALL=true
+fi
+# Also trigger install if server auth deps are missing
+if ! node -e "require.resolve('jsonwebtoken',{paths:['server']})" >/dev/null 2>&1; then
+  NEED_NPM_INSTALL=true
+fi
+if ! node -e "require.resolve('bcryptjs',{paths:['server']})" >/dev/null 2>&1; then
+  NEED_NPM_INSTALL=true
+fi
+if [ "$NEED_NPM_INSTALL" = true ]; then
   echo "Installing workspace dependencies..."
   npm install --ignore-scripts --workspaces --include-workspace-root >/dev/null 2>&1
 fi
