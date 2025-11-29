@@ -1,6 +1,7 @@
-version: "3.9"
 services:
   app:
     build: .
     image: puzzle/puzzleverse-mern:latest
-    command: ["./run_tests.sh", "${TASK_ID}"]
+    environment:
+      - TASK_ID
+    command: ["./run_tests.sh"]

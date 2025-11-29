@@ -3,7 +3,10 @@ set -euo pipefail
 
 TASK_ID="${1-}"
 if [ -z "$TASK_ID" ]; then
-  echo "Usage: ./run_tests.sh <task-id>"
+  TASK_ID="${TASK_ID:-}"
+fi
+if [ -z "$TASK_ID" ]; then
+  echo "Usage: ./run_tests.sh <task-id> or set TASK_ID env var"
   exit 2
 fi
 
