@@ -1,7 +1,0 @@
-version: "3.9"
-services:
-  app:
-    build: ../..
-    image: puzzle/puzzleverse-mern:latest
-    working_dir: /app
-    command: ["./run_tests.sh", "${TASK_ID}"]

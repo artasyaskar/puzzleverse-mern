@@ -1,8 +1,0 @@
-Task Folder Overview Template
-
-Include in each task folder:
-- task_description.txt (required tags per spec)
-- task_tests.* (jest, 6+ tests)
-- task_diff.txt (diff of implementation)
-- run-tests.sh (delegates to root run_tests.sh)
-- docker-compose.yaml (builds repo and runs tests)
