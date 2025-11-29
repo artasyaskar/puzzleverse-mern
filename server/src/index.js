@@ -4,11 +4,17 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import authRouter from './auth/routes.js'
 import { requireAuth } from './auth/service.js'
+import requestId from './middleware/requestId.js'
+import logger from './middleware/logger.js'
+import errorHandler from './middleware/errorHandler.js'
+import { PORT } from './config.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const app = express()
 
+app.use(requestId())
+app.use(logger())
 app.use(morgan('dev'))
 app.use(express.json())
 
@@ -30,7 +36,9 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'))
 })
 
-const port = process.env.PORT || 3000
+app.use(errorHandler())
+
+const port = PORT
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`)
 })
