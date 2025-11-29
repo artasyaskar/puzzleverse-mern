@@ -16,6 +16,17 @@ if [ ! -d "node_modules" ] || [ ! -d "server/node_modules" ] || [ ! -d "client/n
   npm install --ignore-scripts --workspaces --include-workspace-root >/dev/null 2>&1
 fi
 
+# Ensure pytest is available locally when using non-Docker runs
+if [ -f "tasks/${TASK_ID}/task_tests.py" ]; then
+  if ! python3 -c "import pytest" >/dev/null 2>&1; then
+    echo "Installing local Python test deps (pytest, requests)..."
+    if ! python3 -m pip --version >/dev/null 2>&1; then
+      python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
+    fi
+    python3 -m pip install --user -q pytest requests || true
+  fi
+fi
+
 # Build client once to ensure static is present
 npm run build -w client >/dev/null 2>&1 || true
 
