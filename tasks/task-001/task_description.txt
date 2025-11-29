@@ -1,43 +1,34 @@
 task_description: |
-  Task: Create a functioning login system for the MERN starter.
-  Instructions:
-  Build a simple, reliable authentication flow. Keep the implementation minimal and focus on the behaviors below (these are the ones the tests will assert).
+  Task: Build a simple login for this starter app.
 
-  Server-side (Node/Express):
+  Please make a small, clear auth flow on the server (Node + Express). Keep it easy to read and do only what is needed here.
 
-  Behaviors asserted by the tests (must-haves):
-  - Registration:
-    - POST /register creates a user, returns { id, email } with 201.
-    - Email uniqueness is case-insensitive; duplicates return 400 with a helpful message.
-    - Password policy: minimum 8 chars with at least one letter and one number; invalid inputs return 400.
-  - Login:
-    - POST /login verifies credentials and returns { accessToken, refreshToken, user: { id, email } } with 200.
-    - Email matching for login is case-insensitive.
-    - Login is rate-limited: after five failed attempts for a source, responses become 429 with a friendly message.
-  - Access control:
-    - GET /api/me requires Authorization: Bearer <accessToken>; returns { id, email } for valid tokens; 401 otherwise.
-  - Tokens:
-    - Access token is a JWT (3 parts) signed with HS256 and contains sub, email, and an exp claim in the near future.
-    - Refresh token is an opaque random string (hex-like, sufficiently long).
-    - Refresh rotation: POST /refresh invalidates the used refresh token and returns new access+refresh tokens; the old refresh token cannot be used again.
-    - Logout revokes the provided refresh token; calling logout twice with the same token is idempotent (still OK).
-  - Privacy:
-    - No password or passwordHash appears in any response payloads.
+  What must work (these are the things we check):
+  - Register (POST /api/auth/register)
+    - Creates a user and returns { id, email } with 201.
+    - Email must be unique without caring about case (USER@x and user@x are the same). Duplicates return 400 with a helpful message.
+    - Password must be at least 8 characters and include a letter and a number. Bad input returns 400.
+  - Login (POST /api/auth/login)
+    - Checks email and password (email match is case-insensitive).
+    - On success returns { accessToken, refreshToken, user: { id, email } } with 200.
+    - Important: every successful login must return a new refresh token (different from any previous one).
+    - Has a simple rate limit: after 5 failed attempts, return 429 with a friendly message.
+  - Me (GET /api/me)
+    - Needs Authorization: Bearer <accessToken>.
+    - Returns { id, email } when the token is valid. Otherwise 401.
+  - Tokens
+    - Access token is a JWT (3 parts) using HS256 and has sub, email, and an exp in the near future.
+    - Refresh token is a long random string (hex-like).
+    - Refresh (POST /api/auth/refresh) replaces the used refresh token with a new one. The old one cannot be used again.
+    - Logout (POST /api/auth/logout) revokes the given refresh token. Calling it twice with the same token is still OK.
+  - Privacy
+    - Never return passwords or password hashes in any response.
 
-  Implementation guidance (not graded directly by tests):
-  - Keep state in memory (no database) for users and refresh tokens.
-  - Use a strong password hash (e.g., bcrypt or argon2); do not store plaintext.
-  - Use JWT HS256 with a secret (e.g., from process.env.JWT_SECRET, with a safe default for local runs).
-  - Keep server/src organized:
-    - server/src/auth/service.js — storage, hashing, token issue/verify/rotate/revoke
-    - server/src/auth/routes.js — express routes and input validation
-    - server/src/middleware/rateLimit.js — login rate limiter
-    - server/src/index.js — wire everything up
+  Notes (how you implement it):
+  - Keep everything in memory (no database).
+  - Hash passwords (e.g. bcrypt or argon2). Do not store plaintext.
+  - Use a JWT secret (HS256). A default is fine for local runs.
 
-  Success criteria:
-  - All tests in tasks/task-001/task_tests.py pass.
-  - The app builds and /api/health remains functional.
-  - Code is clear and maintainable.
 difficulty: hard
 category: Feature
 tags: [node, express, auth]
