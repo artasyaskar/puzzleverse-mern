@@ -1,56 +1,62 @@
 task_description: |
   Task: Make a real working login system for the MERN starter
+
   Instructions:
-  You are the engineer now. You have to make a real, safe login system. Think of it like making a front door, a guard who checks people, and a book that remembers who came in. Everything should work well and not break.
 
-  What you’ll build (server-side, Node/Express):
-  - A small user list saved in memory. Each user has: id, email, passwordHash, createdAt.
-  - Passwords must be changed into a strong hash (bcrypt or argon2). Never save real passwords.
-  - Routes under /api/auth:
-    - POST /register: make a new user. Do not allow same email two times (email check should ignore upper/lower case). Check if email is valid and password has at least 8 letters, with one letter and one number. On success return { id, email }, status 201.
-    - POST /login: check email and password. If correct, give:
-      - a short-time access token (JWT), and
-      - a long-time refresh token (a random string).
-      Return { accessToken, refreshToken, user: { id, email } }, status 200.
-    - POST /refresh: take a good refresh token and give a new access token. Refresh tokens should be used only once and replaced with a new one. Return { accessToken, refreshToken }.
-    - POST /logout: remove the given refresh token so it can’t be used again. If the token is already gone, still return OK.
-  - Protected sample route:
-    - GET /api/me: needs a good access token (Authorization: Bearer <token>). Returns { id, email } of the logged-in user.
-  - Rate limiting:
-    - For POST /login only: allow only 5 tries from one IP in 60 seconds. If someone tries more, return 429 with a friendly message.
-  - Validation & errors:
-    - If input is wrong, return 400 with a simple, clear message.
-    - If login or token is wrong, return 401.
-    - If too many tries, return 429.
+  You are the engineer now, so you have to make a safe login system. Think like you are building a front door for a house, with a guard checking people, and a small notebook that remembers who came in. It should be simple and not break.
 
-  Important behaviors the tests need:
-  - Emails are checked without caring about letter case for both signup and login.
-  - Passwords must never be sent back in any reply.
-  - Access tokens should have a short life (you can pretend 5 minutes). You only need to put this inside the token; no need to wait.
-  - Refresh tokens are saved in memory and must change each time they are used. Old one becomes bad.
-  - Logout removes the refresh token that was given, but does not break other tokens.
+  Server-side (Node/Express):
+
+  1. Keep a tiny user list in memory. Each user has: id, email, passwordHash, createdAt.
+  2. Passwords must be turned into a strong hash (bcrypt or argon2). Never save the real password.
+  3. Routes under /api/auth:
+     1. POST /register: make a new user. Do not let two people use the same email (ignore upper and lower case). Make sure the email is real and the password has at least 8 characters with one letter and one number. Return { id, email } with status 201.
+     2. POST /login: check the email and password. If correct, give:
+        1. a short-time access token (JWT)
+        2. a long-time refresh token (a random string)
+        Then return { accessToken, refreshToken, user: { id, email } } with status 200.
+     3. POST /refresh: take a valid refresh token and give a new access token. The old refresh token must stop working. Return { accessToken, refreshToken }.
+     4. POST /logout: remove the given refresh token so it cannot work again. Even if it was already removed, still return OK.
+  4. Protected route:
+     1. GET /api/me: needs a real access token (Authorization: Bearer <token>). Returns { id, email } of the logged-in user.
+  5. Rate limiting:
+     1. Only for POST /login: allow 5 tries from the same IP in 60 seconds. If someone tries more, return 429 with a friendly message.
+  6. Validation and errors:
+     1. If input is wrong, return 400 with a simple message.
+     2. If login info or token is wrong, return 401.
+     3. If too many tries happen, return 429.
+
+  Important behaviors the tests want:
+
+  1. Emails must be checked without caring about letter case.
+  2. Passwords must never be shown in any response.
+  3. Access tokens should last only a short time (you can pretend 5 minutes).
+  4. Refresh tokens stay in memory and must change every time they get used.
+  5. Logout only removes the refresh token given, not other tokens.
 
   Technical requirements:
-  - Keep it simple: no database. Save users and refresh tokens in memory.
-  - Keep files ordered in server/src:
-    - server/src/auth/service.js: user storage, hashing, making/verifying/rotating/revoking tokens
-    - server/src/auth/routes.js: express routes and checks for inputs
-    - server/src/middleware/rateLimit.js: simple IP limit for /login
-    - server/src/index.js: connect all routes and middleware
-  - Use JWT for access tokens (HS256) with secret from process.env.JWT_SECRET (a safe default is allowed for tests).
-  - Use strong password hashing (bcrypt or argon2). Pick one.
-  - No UI changes needed.
+
+  1. Keep it simple: no database. Save users and refresh tokens in memory.
+  2. File structure inside server/src:
+     1. server/src/auth/service.js: user storage, hashing, making/verifying/rotating/revoking tokens
+     2. server/src/auth/routes.js: express routes and checks
+     3. server/src/middleware/rateLimit.js: simple rate limit for /login
+     4. server/src/index.js: connect everything together
+  3. Use JWT for access tokens (HS256) with secret from process.env.JWT_SECRET (a safe default is okay for tests).
+  4. Use strong hashing (bcrypt or argon2). Pick one and keep using it.
+  5. No UI changes needed.
 
   Success criteria (what passing looks like):
-  - All tests in tasks/task-001/task_tests.py pass.
-  - App should still build, and the health endpoint must work.
-  - Code should be clean, easy to read, and handle the special cases above.
+
+  1. All tests in tasks/task-001/task_tests.py pass.
+  2. The app still builds and the health endpoint works.
+  3. Code is easy to read and handles all the cases above.
 
   Tips:
-  - Be careful with status codes and messages; tests will check them.
-  - Keep functions small and clear so they are easy to test.
-  - Refresh tokens are private secrets. Do not print them.
-  
+
+  1. Be careful with status codes and messages because tests check them.
+  2. Keep functions small so they are easy to test.
+  3. Treat refresh tokens like secrets. Never print them.
 difficulty: hard
 category: Feature
 tags: [node, express, auth]
