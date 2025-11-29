@@ -2,6 +2,9 @@ import os
 import time
 import uuid
 import requests
+import base64
+import json
+import re
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:3000')
 
@@ -35,6 +38,7 @@ def me(access_token):
 
 
 def test_register_success_and_case_insensitive_uniqueness():
+    """Registers a user and ensures duplicate registration (case-insensitive) fails with 400."""
     email = unique_email()
     r1 = register(email, 'Passw0rd!')
     assert r1.status_code == 201, r1.text
@@ -48,6 +52,7 @@ def test_register_success_and_case_insensitive_uniqueness():
 
 
 def test_register_password_policy():
+    """Rejects weak passwords by enforcing a policy (min length and alphanumeric)."""
     email = unique_email()
     r = register(email, 'short')
     assert r.status_code == 400, r.text
@@ -55,6 +60,7 @@ def test_register_password_policy():
 
 
 def test_login_success_and_me_endpoint_with_bearer():
+    """Logs in successfully, returns access+refresh+user and authorizes /api/me with Bearer token."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')
@@ -69,6 +75,7 @@ def test_login_success_and_me_endpoint_with_bearer():
 
 
 def test_login_rate_limit_after_five_attempts():
+    """Applies IP rate limiting on /login so that after five failed attempts, responses are 429."""
     email = unique_email()
     # create account
     assert register(email, 'Passw0rd1').status_code == 201
@@ -85,7 +92,16 @@ def test_login_rate_limit_after_five_attempts():
     assert 'too many' in lr.text.lower() or 'rate' in lr.text.lower()
 
 
+def test_login_accepts_case_insensitive_email():
+    """Email matching on login is case-insensitive."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    r = login(email.upper(), 'Passw0rd1')
+    assert r.status_code == 200, r.text
+
+
 def test_refresh_rotation_and_old_token_invalid():
+    """Rotates refresh tokens and invalidates the previous token; new access token remains valid."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')
@@ -108,6 +124,7 @@ def test_refresh_rotation_and_old_token_invalid():
 
 
 def test_logout_revokes_refresh_token():
+    """Revokes a refresh token on logout so subsequent refresh attempts fail."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')
@@ -123,6 +140,7 @@ def test_logout_revokes_refresh_token():
 
 
 def test_me_requires_valid_bearer_token():
+    """Requires a valid Bearer JWT to access /api/me; missing/invalid tokens yield 401."""
     # missing token
     r1 = requests.get(url('/api/me'))
     assert r1.status_code == 401
@@ -130,3 +148,63 @@ def test_me_requires_valid_bearer_token():
     # invalid token
     r2 = requests.get(url('/api/me'), headers={'Authorization': 'Bearer not-a-real-token'})
     assert r2.status_code == 401
+
+
+def _b64url_decode(s):
+    pad = '=' * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s + pad)
+
+
+def test_access_token_is_jwt_with_hs256_and_exp_claim():
+    """Validates access token structure: JWT with HS256 header and an exp claim in the near future."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    r = login(email, 'Passw0rd1')
+    assert r.status_code == 200
+    tok = r.json()['accessToken']
+
+    parts = tok.split('.')
+    assert len(parts) == 3, 'accessToken must be a JWT with 3 parts'
+    header = json.loads(_b64url_decode(parts[0]).decode('utf-8'))
+    payload = json.loads(_b64url_decode(parts[1]).decode('utf-8'))
+
+    assert header.get('alg') == 'HS256', 'JWT must be signed with HS256'
+    assert 'sub' in payload and 'email' in payload, 'JWT must include sub and email claims'
+    assert 'exp' in payload and isinstance(payload['exp'], int), 'JWT must include exp claim'
+    now = int(time.time())
+    assert payload['exp'] > now, 'exp must be in the future'
+    assert payload['exp'] - now <= 10 * 60, 'exp should be within a short window (<=10m)'
+
+
+def test_tokens_look_random_and_private_fields_not_returned():
+    """Ensures tokens look random (shape/length) and registration response does not leak sensitive fields."""
+    email = unique_email()
+    r1 = register(email, 'Passw0rd1')
+    assert r1.status_code == 201
+    body = r1.json()
+    assert 'password' not in body and 'passwordHash' not in body
+
+    r2 = login(email, 'Passw0rd1')
+    assert r2.status_code == 200
+    data = r2.json()
+    at = data['accessToken']
+    rt = data['refreshToken']
+    # access token: three-part JWT
+    assert len(at.split('.')) == 3
+    # refresh token: long hex string
+    assert isinstance(rt, str) and len(rt) >= 40 and re.fullmatch(r'[0-9a-f]+', rt) is not None
+
+
+def test_refresh_token_changes_on_each_login():
+    """Each successful login issues a new refresh token (rotation on login), ensuring token uniqueness."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    r1 = login(email, 'Passw0rd1')
+    assert r1.status_code == 200
+    rt1 = r1.json()['refreshToken']
+
+    r2 = login(email, 'Passw0rd1')
+    assert r2.status_code == 200
+    rt2 = r2.json()['refreshToken']
+
+    assert isinstance(rt1, str) and isinstance(rt2, str) and rt1 != rt2
