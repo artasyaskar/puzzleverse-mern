@@ -1,62 +1,43 @@
 task_description: |
-  Task: Make a real working login system for the MERN starter
-
+  Task: Create a functioning login system for the MERN starter.
   Instructions:
-
-  You are the engineer now, so you have to make a safe login system. Think like you are building a front door for a house, with a guard checking people, and a small notebook that remembers who came in. It should be simple and not break.
+  Build a simple, reliable authentication flow. Keep the implementation minimal and focus on the behaviors below (these are the ones the tests will assert).
 
   Server-side (Node/Express):
 
-  1. Keep a tiny user list in memory. Each user has: id, email, passwordHash, createdAt.
-  2. Passwords must be turned into a strong hash (bcrypt or argon2). Never save the real password.
-  3. Routes under /api/auth:
-     1. POST /register: make a new user. Do not let two people use the same email (ignore upper and lower case). Make sure the email is real and the password has at least 8 characters with one letter and one number. Return { id, email } with status 201.
-     2. POST /login: check the email and password. If correct, give:
-        1. a short-time access token (JWT)
-        2. a long-time refresh token (a random string)
-        Then return { accessToken, refreshToken, user: { id, email } } with status 200.
-     3. POST /refresh: take a valid refresh token and give a new access token. The old refresh token must stop working. Return { accessToken, refreshToken }.
-     4. POST /logout: remove the given refresh token so it cannot work again. Even if it was already removed, still return OK.
-  4. Protected route:
-     1. GET /api/me: needs a real access token (Authorization: Bearer <token>). Returns { id, email } of the logged-in user.
-  5. Rate limiting:
-     1. Only for POST /login: allow 5 tries from the same IP in 60 seconds. If someone tries more, return 429 with a friendly message.
-  6. Validation and errors:
-     1. If input is wrong, return 400 with a simple message.
-     2. If login info or token is wrong, return 401.
-     3. If too many tries happen, return 429.
+  Behaviors asserted by the tests (must-haves):
+  - Registration:
+    - POST /register creates a user, returns { id, email } with 201.
+    - Email uniqueness is case-insensitive; duplicates return 400 with a helpful message.
+    - Password policy: minimum 8 chars with at least one letter and one number; invalid inputs return 400.
+  - Login:
+    - POST /login verifies credentials and returns { accessToken, refreshToken, user: { id, email } } with 200.
+    - Email matching for login is case-insensitive.
+    - Login is rate-limited: after five failed attempts for a source, responses become 429 with a friendly message.
+  - Access control:
+    - GET /api/me requires Authorization: Bearer <accessToken>; returns { id, email } for valid tokens; 401 otherwise.
+  - Tokens:
+    - Access token is a JWT (3 parts) signed with HS256 and contains sub, email, and an exp claim in the near future.
+    - Refresh token is an opaque random string (hex-like, sufficiently long).
+    - Refresh rotation: POST /refresh invalidates the used refresh token and returns new access+refresh tokens; the old refresh token cannot be used again.
+    - Logout revokes the provided refresh token; calling logout twice with the same token is idempotent (still OK).
+  - Privacy:
+    - No password or passwordHash appears in any response payloads.
 
-  Important behaviors the tests want:
+  Implementation guidance (not graded directly by tests):
+  - Keep state in memory (no database) for users and refresh tokens.
+  - Use a strong password hash (e.g., bcrypt or argon2); do not store plaintext.
+  - Use JWT HS256 with a secret (e.g., from process.env.JWT_SECRET, with a safe default for local runs).
+  - Keep server/src organized:
+    - server/src/auth/service.js — storage, hashing, token issue/verify/rotate/revoke
+    - server/src/auth/routes.js — express routes and input validation
+    - server/src/middleware/rateLimit.js — login rate limiter
+    - server/src/index.js — wire everything up
 
-  1. Emails must be checked without caring about letter case.
-  2. Passwords must never be shown in any response.
-  3. Access tokens should last only a short time (you can pretend 5 minutes).
-  4. Refresh tokens stay in memory and must change every time they get used.
-  5. Logout only removes the refresh token given, not other tokens.
-
-  Technical requirements:
-
-  1. Keep it simple: no database. Save users and refresh tokens in memory.
-  2. File structure inside server/src:
-     1. server/src/auth/service.js: user storage, hashing, making/verifying/rotating/revoking tokens
-     2. server/src/auth/routes.js: express routes and checks
-     3. server/src/middleware/rateLimit.js: simple rate limit for /login
-     4. server/src/index.js: connect everything together
-  3. Use JWT for access tokens (HS256) with secret from process.env.JWT_SECRET (a safe default is okay for tests).
-  4. Use strong hashing (bcrypt or argon2). Pick one and keep using it.
-  5. No UI changes needed.
-
-  Success criteria (what passing looks like):
-
-  1. All tests in tasks/task-001/task_tests.py pass.
-  2. The app still builds and the health endpoint works.
-  3. Code is easy to read and handles all the cases above.
-
-  Tips:
-
-  1. Be careful with status codes and messages because tests check them.
-  2. Keep functions small so they are easy to test.
-  3. Treat refresh tokens like secrets. Never print them.
+  Success criteria:
+  - All tests in tasks/task-001/task_tests.py pass.
+  - The app builds and /api/health remains functional.
+  - Code is clear and maintainable.
 difficulty: hard
 category: Feature
 tags: [node, express, auth]

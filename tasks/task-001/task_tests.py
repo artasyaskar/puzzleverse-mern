@@ -139,6 +139,20 @@ def test_logout_revokes_refresh_token():
     assert rr.status_code in (400, 401), rr.text
 
 
+def test_logout_is_idempotent():
+    """Calling logout twice with the same refresh token still returns OK (idempotent)."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    r = login(email, 'Passw0rd1')
+    assert r.status_code == 200
+    rt = r.json()['refreshToken']
+
+    lo1 = logout(rt)
+    assert lo1.status_code in (200, 204), lo1.text
+    lo2 = logout(rt)
+    assert lo2.status_code in (200, 204), lo2.text
+
+
 def test_me_requires_valid_bearer_token():
     """Requires a valid Bearer JWT to access /api/me; missing/invalid tokens yield 401."""
     # missing token
