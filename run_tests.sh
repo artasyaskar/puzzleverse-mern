@@ -10,6 +10,12 @@ if [ -z "$TASK_ID" ]; then
   exit 2
 fi
 
+# Ensure Node dependencies are installed locally (for non-Docker runs)
+if [ ! -d "node_modules" ] || [ ! -d "server/node_modules" ] || [ ! -d "client/node_modules" ]; then
+  echo "Installing workspace dependencies..."
+  npm install --ignore-scripts --workspaces --include-workspace-root >/dev/null 2>&1
+fi
+
 # Build client once to ensure static is present
 npm run build -w client >/dev/null 2>&1 || true
 
@@ -33,7 +39,7 @@ SERVER_PID=$!
 
 # Wait for health endpoint (max ~15s)
 ATTEMPTS=30
-until wget -qO- http://localhost:3000/api/health >/dev/null 2>&1; do
+until { command -v wget >/dev/null 2>&1 && wget -qO- http://localhost:3000/api/health >/dev/null 2>&1; } || { command -v curl >/dev/null 2>&1 && curl -fsS http://localhost:3000/api/health >/dev/null 2>&1; }; do
   ATTEMPTS=$((ATTEMPTS-1))
   if [ $ATTEMPTS -le 0 ]; then
     echo "Server did not become healthy in time"
