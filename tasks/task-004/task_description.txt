@@ -1,29 +1,29 @@
 task: Robust Input Validation with Helpful 400s
 instructions: >-
-  Tighten input validation for auth endpoints and ensure 400 responses contain
-  clear, human-readable messages. Focus on the checks listed below.
+  Tighten input checks at login points – that way, invalid requests get a proper 400 error
+  basic notes you can follow without trouble. Look at what comes after this part instead.
 task_description: |
-  Task: Add strong, precise validation for /register and /login.
+  Sort out /register along with /login using strict validations. Make sure each input either runs smooth or stops quick.
 
-  What must work (we will actually check these):
+  Here’s what should work - since we’ll try it on our own:
   - /api/auth/register
-    - Missing email => 400 with a message mentioning "email".
-    - Missing password => 400 with a message mentioning "password".
-    - Invalid email format => 400 (mention "email").
-    - Password policy violation (min 8, letters+numbers) => 400 with helpful text.
+  - No email? You’ll get 400 along with a message stating it’s not there.
+  - If no password’s entered → you get a 400 error, plus a message pops up stating "password" is required.
+  - If the email’s wrong, you’ll get error 400 - mention "email".
+  Password rules ignored – must have 8 characters, some letters with numbers → triggers 400 and a plain error note.
   - /api/auth/login
-    - Missing email or password => 400 with helpful messages (mention fields).
+  Got wrong details - say, email or password? You’ll see a 400 error. The message spells out exactly what's off. Hints per field make corrections quick.
   - Privacy
-    - Error responses must not include any password or passwordHash fields.
+  Error responses mustn't reveal any details about passwords - or anything tied to passwordHash - just skip it entirely.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/auth/routes.js — validate request bodies and return 400 with helpful messages.
-  - server/src/utils/validators.js — implement/extend helpers (email, min length, letters+numbers).
-  - server/src/utils/http.js — optional helpers for uniform 400 responses.
+  How to adjust stuff – areas you might change:
+  - server/src/auth/routes.js – look at user input, return 400 when invalid, show helpful error messages instead.
+  server/src/utils/validators.js – create or improve helpers such as checking emails, setting shortest allowed size, combining letters with numbers using if rules .
+  - server/src/utils/http.js – quick tools for steady 400 responses, just in case.
 
-  Notes (not graded directly):
-  - Keep responses JSON with an "error" string.
-  - Avoid leaking sensitive details.
+  Opinions – they won’t boost your result:
+  {"error": "Keep answers in JSON format with an error message string."}.
+  - Keep personal things hidden.
 
 difficulty: hard
 category: Feature

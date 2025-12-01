@@ -1,28 +1,28 @@
 task: Wire CORS and Security Headers
 instructions: >-
-  Add proper CORS and basic security headers to the Express server. Focus on
-  the items listed under "What must work" below. Keep it simple and readable.
+  Add proper CORS along with key security headers into the Express config. Focus on
+  the items displayed in "What must work" just here. Keep it straightforward with simple terms.
 task_description: |
-  Task: Wire CORS and Security Headers for the server.
+  Turn on CORS plus add safety headers in the server setup.
 
-  What must work (we will actually check these):
+  What needs to work - since we’ll actually try it out:
   - CORS
-    - GET /api/health has Access-Control-Allow-Origin header (default '*').
-    - POST /api/auth/register also has the header.
-    - OPTIONS preflight to /api/auth/register responds 204 with proper CORS headers.
-    - Vary: Origin is present on CORS responses.
+  - The endpoint GET /api/health sends back the Access-Control-Allow-Origin header - set to blank unless changed.
+  The POST endpoint at /api/auth/register sends along the header as well.
+  The OPTIONS call to /api/auth/register returns 204 plus proper CORS headers.
+  Origin appears in CORS responses.
   - Security headers
-    - X-Content-Type-Options=nosniff
-    - X-Frame-Options=SAMEORIGIN
-    - X-XSS-Protection=0
+  - X-Content-Type-Options=nosniff
+  - X-Frame-Options=SAMEORIGIN
+  - X-XSS-Protection=0
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/index.js — mount CORS and security headers middleware.
-  - server/src/middleware/cors.js — ensure headers are set for GET/POST/OPTIONS.
-  - server/src/config.js — optional: origin allowlist (may be extended later).
+  Here's the spot to change things - places you might adjust:
+  - server/src/index.js – configured CORS plus added security headers through middleware.
+  - server/src/middleware/cors.js – check that headers behave right whether you're sending a GET, POST, or OPTIONS request.
+  - server/src/config.js – your call: origins permitted (might expand later) but feel free to adjust anytime.
 
-  Notes (not graded directly):
-  - You can allow all origins by default. Credentials are not required.
+  Opinions? They won’t boost your result
+  You can allow each source instantly - no sign-in details required at all.
 
 difficulty: hard
 category: Feature

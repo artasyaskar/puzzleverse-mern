@@ -1,28 +1,28 @@
 task: Improve Login Rate Limiter (Retry-After + Reset)
 instructions: >-
-  Update the login rate limiter to return a Retry-After header on 429 and to
-  clearly reset failed-attempt counters after a successful login. Focus on the
-  items listed under "What must work".
+  Set up the login rate limit to include a Retry-After header if it hits 429, then ensure replies come just after the wait time
+  sure clear the wrong attempts counter when they log in okay. Keep an eye on the
+  stuff listed under "What needs to function".
 task_description: |
-  Task: Improve the /login rate limiter with Retry-After and reset behavior.
+  Fix the login rate limiter - add retry-after plus reset logic.
 
-  What must work (we will actually check these):
-  - After five failed login attempts, the next attempt returns 429 and includes
-    a Retry-After response header with a positive integer value (seconds).
-  - A successful login clears the failure counter so the user has five new
-    chances before lockout again.
-  - Interleaving successes should not push users into lockout.
-  - The 429 response message should include a friendly "Too many" phrase.
-  - Locking one email should not prevent a different email from logging in.
+  What needs to work – since we’ll check it on our own:
+  - After five failed attempts, one more shot brings a 429 error - tacking on extra delay
+  a Retry-After header with a digit that tells how many seconds.
+  A login that works wipes the mistake count clean - so they get five fresh tries again
+  chances till isolation starts again.
+  Hot runs don’t need to shut anyone out.
+  A 429 response should have a calm "too busy" message tucked in.
+  Logging in here shouldn’t lock you out of there.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/middleware/rateLimit.js — compute remaining window and expose or set Retry-After.
-  - server/src/auth/routes.js — set Retry-After on 429 and ensure reset-on-success is in place.
-  - server/src/utils/http.js — optional helper to set standard error bodies and headers.
+  Here's the spot to adjust things - places you might visit
+  - server/src/middleware/rateLimit.js – check remaining time in window, then set or display Retry-After.
+  - server/src/auth/routes.js – if you get 429, set Retry-After; once it works, reset the count right away.
+  - server/src/utils/http.js – a small helper that adds standard error texts or headers when required, based on what's happening.
 
-  Notes (not graded directly):
-  - Exact window math is flexible; tests only require a positive integer Retry-After.
-  - Keep responses JSON with helpful messages.
+  Thoughts - won’t affect your score:
+  The exact time might shift - tests only require an integer for Retry-After.
+  {"message": "Send answers in JSON format with useful info."}.
 
 difficulty: hard
 category: Feature

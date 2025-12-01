@@ -1,26 +1,26 @@
 task: JWT Claims and Secret Precedence
 instructions: >-
-  Ensure access tokens include standard claims and that the JWT secret is read
-  from process.env.JWT_SECRET when provided. Add a small config header to the
+  Check that access tokens include standard details - grab the JWT secret right too
+  If available, go with process.env.JWT_SECRET - add a short setup hint up front
   health endpoint.
 task_description: |
-  Task: Strengthen JWT claims and configuration semantics.
+  Boost how JWT data is defined, also improve setup clarity.
 
-  What must work (we will actually check these):
-  - Access token (JWT) includes: sub, email, iat, exp. HS256 algorithm.
-  - exp should be in the near future (we won't wait; we only check it exists and is > now).
-  - If JWT_SECRET env var is set, it must be used; otherwise fall back to a safe default.
-  - /api/health response must include header X-App-Name with a non-empty value.
-  - /api/me must reject a token with a clearly expired exp (we will simulate an expired token).
-  - /api/me must reject a token signed with the wrong secret.
+  Here's what should work – since we'll try it on our own
+  - The access token (JWT) contains: sub, email, iat, exp. Runs on HS256 instead - unless that’s a mistake. Might get updated sometime. For now, this is what we’ve got.
+  - exp should happen shortly (we're not hanging around - just confirming it's set but not immediate).
+  If the JWT_SECRET variable’s around, go with it - else, grab a solid backup choice.
+  - The /api/health response needs the X-App-Name header set to a clear value.
+  - The /api/me endpoint must disable a token once it's expired - we'll check this by testing with an old one.
+  - The /api/me endpoint must reject a token when it’s signed using a wrong secret.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/auth/service.js — token signing (claims, algorithm, verification) and secret precedence.
-  - server/src/index.js — set X-App-Name header on health.
-  - server/src/config.js — export APP_NAME and read JWT secret precedence if needed.
+  Over here’s where you’ll adjust things - places you might change
+  - server/src/auth/service.js – makes tokens, setting claims along with encryption type; verifies secrets by their importance level.
+  - server/src/index.js – includes X-App-Name header while verifying health, using a small tweak inside the check routine that runs each time.
+  - server/src/config.js – pass along APP_NAME, pull JWT secret only when needed instead.
 
-  Notes (not graded directly):
-  - Keep HS256 throughout and do not leak secrets.
+  Thoughts (not included in your total):
+  Use HS256 consistently - else, keys could leak through gaps.
 
 difficulty: hard
 category: Feature
