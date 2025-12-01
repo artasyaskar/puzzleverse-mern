@@ -1,0 +1,21 @@
+diff --git a/server/src/index.js b/server/src/index.js
+index d5c8aff..6593a55 100644
+--- a/server/src/index.js
++++ b/server/src/index.js
+@@ -7,7 +7,7 @@ import { requireAuth } from './auth/service.js'
+ import requestId from './middleware/requestId.js'
+ import logger from './middleware/logger.js'
+ import errorHandler from './middleware/errorHandler.js'
+-import { PORT } from './config.js'
++import { PORT, APP_NAME } from './config.js'
+ import cors from './middleware/cors.js'
+ import securityHeaders from './middleware/securityHeaders.js'
+ 
+@@ -23,6 +23,7 @@ app.use(cors())
+ app.use(securityHeaders())
+ 
+ app.get('/api/health', (req, res) => {
++  res.setHeader('X-App-Name', APP_NAME)
+   res.json({ status: 'ok' })
+ })
+ 
