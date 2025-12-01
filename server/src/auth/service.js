@@ -150,7 +150,7 @@ export function requireAuth(req, res, next) {
   const hdr = req.headers['authorization'] || ''
   const [scheme, token] = hdr.split(' ')
   if (scheme !== 'Bearer' || !token) {
-    return res.status(401).json({ error: 'Missing or invalid Authorization header' })
+    return res.status(401).json({ error: 'Missing or invalid Authorization header', requestId: req.id })
   }
   try {
     const payload = verifyAccessToken(token)
@@ -159,6 +159,6 @@ export function requireAuth(req, res, next) {
     req.user = { id: u.id, email: u.email, createdAt: u.createdAt }
     return next()
   } catch (e) {
-    return res.status(401).json({ error: 'Invalid or expired token' })
+    return res.status(401).json({ error: 'Invalid or expired token', requestId: req.id })
   }
 }

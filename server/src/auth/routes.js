@@ -22,10 +22,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     const hasEmail = typeof email === 'string' && email.trim().length > 0
     const hasPassword = typeof password === 'string' && password.length > 0
     if (!hasEmail) {
-      return res.status(400).json({ error: 'Missing email' })
+      return res.status(400).json({ error: 'Missing email', requestId: req.id })
     }
     if (!hasPassword) {
-      return res.status(400).json({ error: 'Missing password field' })
+      return res.status(400).json({ error: 'Missing password field', requestId: req.id })
     }
     const result = await loginUser(String(email || ''), String(password || ''))
     if (req.resetLoginFailures) req.resetLoginFailures()
@@ -46,7 +46,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       const secs = req.getRetryAfterSeconds ? req.getRetryAfterSeconds() : 60
       res.set('Retry-After', String(secs))
     }
-    return res.status(code).json({ error: message })
+    return res.status(code).json({ error: message, requestId: req.id })
   }
 })
 

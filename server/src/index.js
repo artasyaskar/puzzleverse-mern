@@ -39,8 +39,9 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 const clientDist = path.resolve(__dirname, '../../client/dist')
 app.use(express.static(clientDist))
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientDist, 'index.html'))
+app.get('*', (req, res, next) => {
+  // For unknown routes, return JSON 404 with requestId (tests expect /no-such-route to be 404)
+  res.status(404).json({ error: 'Not Found', requestId: req.id })
 })
 
 app.use(errorHandler())
