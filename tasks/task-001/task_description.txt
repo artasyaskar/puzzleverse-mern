@@ -1,34 +1,41 @@
+task: This time around, we're setting up user access on your app with Node along with Express. We’re talking account creation, logging back in later, or simply jumping into what you’ve built.
+instructions: >-
+Here's the breakdown:
+
+1. Sign-Up (POST /api/auth/register)
+If somebody joins without issues, we shoot back a 201 - so it's good to go - with their ID plus email.
+The email should catch attention. If someone already has it, we'll return a 400 error right away.
+Passwords must include some letters together with numbers. When they're too weak, expect a 400 error showing up.
+2. Log-In (POST /api/auth/login)
+We should check the message while making certain the password works.
+If it runs fine, we shoot back a 200 - everything’s set - including accessToken, refreshToken, plus the user info.
+Each time you sign in, pick up a fresh refresh token. At that moment, swap out the access token - this makes everything more secure.
+If you attempt to log in five times plus it fails, we respond with a 429 - blocking access briefly.
+3. User Profile (GET /api/me)
+Go this way instead. This one works only if the auth header has an access token - say, Bearer .
+Got a solid token? Pass the user’s ID with their email. Otherwise – shoot back a 401. Invalid one? No access.
+4. Token Stuff
+The access token should be a JSON Web Token with HS256 - put the user’s ID inside, also add their email plus when it expires.
+The refresh token needs to be a random string of chars - fairly long - to help protect stuff.
+To get a new token, make a POST request to /api/auth/refresh - include the old refresh token yet grab a brand-new one back. After that step, the prior token gets disabled instantly.
+Log out (POST /api/auth/logout) deletes the refresh token – so it won't work anymore. Try it once more? Works just fine, no hiccups.
+5. Privacy's Important
+Keep passwords private - don’t send them, not even scrambled ones, when using APIs.
 task_description: |
-  Task: Build a simple login for this starter app.
+This is the spot you’ll see the code
 
-  Please make a small, clear auth flow on the server (Node + Express). Keep it easy to read and do only what is needed here.
+1. server/src/auth/service.js – deals with user accounts, manages password actions, while taking care of tokens too.
+2. server/src/auth/routes.js – this is how Express manages sign-ups, while handling logins, working on token updates, managing logout actions, or fetching user details.
+3. server/src/middleware/rateLimit.js – here’s where login attempts get slowed down.
+4. server/src/index.js – connects all parts at once.
 
-  What must work (these are the things we check):
-  - Register (POST /api/auth/register)
-    - Creates a user and returns { id, email } with 201.
-    - Email must be unique without caring about case (USER@x and user@x are the same). Duplicates return 400 with a helpful message.
-    - Password must be at least 8 characters and include a letter and a number. Bad input returns 400.
-  - Login (POST /api/auth/login)
-    - Checks email and password (email match is case-insensitive).
-    - On success returns { accessToken, refreshToken, user: { id, email } } with 200.
-    - Important: every successful login must return a new refresh token (different from any previous one).
-    - Has a simple rate limit: after 5 failed attempts, return 429 with a friendly message.
-  - Me (GET /api/me)
-    - Needs Authorization: Bearer <accessToken>.
-    - Returns { id, email } when the token is valid. Otherwise 401.
-  - Tokens
-    - Access token is a JWT (3 parts) using HS256 and has sub, email, and an exp in the near future.
-    - Refresh token is a long random string (hex-like).
-    - Refresh (POST /api/auth/refresh) replaces the used refresh token with a new one. The old one cannot be used again.
-    - Logout (POST /api/auth/logout) revokes the given refresh token. Calling it twice with the same token is still OK.
-  - Privacy
-    - Never return passwords or password hashes in any response.
+Quick Tips:
 
-  Notes (how you implement it):
-  - Keep everything in memory (no database).
-  - Hash passwords (e.g. bcrypt or argon2). Do not store plaintext.
-  - Use a JWT secret (HS256). A default is fine for local runs.
-
+1. Set databases aside for now. Rather, store users and tokens directly in memory - like in a list.
+2. Keep passwords safe with hashing - go for bcrypt or argon2 when saving them. These options guard info from the start - going with one boosts long-term security - choose depending on your system - you can trust both.
+3. To slow down logins, track failed tries - reset counter if access succeeds. Try IP monitoring or email logs as alternatives. Trigger 429 error once five failures pile up.
+4. Use JWT HS256 instead. Keep the key in process.env.JWT_SECRET - also add a test version just in case.
+5. Keep the code simple to understand. That way, when something goes wrong, it's quicker to spot. Add clear warnings or little tips - they guide you right. This cuts down on guesswork later.
 difficulty: hard
 category: Feature
 tags: [node, express, auth]

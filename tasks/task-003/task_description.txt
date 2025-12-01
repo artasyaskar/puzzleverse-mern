@@ -1,0 +1,30 @@
+task: Improve Login Rate Limiter (Retry-After + Reset)
+instructions: >-
+  Update the login rate limiter to return a Retry-After header on 429 and to
+  clearly reset failed-attempt counters after a successful login. Focus on the
+  items listed under "What must work".
+task_description: |
+  Task: Improve the /login rate limiter with Retry-After and reset behavior.
+
+  What must work (we will actually check these):
+  - After five failed login attempts, the next attempt returns 429 and includes
+    a Retry-After response header with a positive integer value (seconds).
+  - A successful login clears the failure counter so the user has five new
+    chances before lockout again.
+  - Interleaving successes should not push users into lockout.
+  - The 429 response message should include a friendly "Too many" phrase.
+  - Locking one email should not prevent a different email from logging in.
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/middleware/rateLimit.js — compute remaining window and expose or set Retry-After.
+  - server/src/auth/routes.js — set Retry-After on 429 and ensure reset-on-success is in place.
+  - server/src/utils/http.js — optional helper to set standard error bodies and headers.
+
+  Notes (not graded directly):
+  - Exact window math is flexible; tests only require a positive integer Retry-After.
+  - Keep responses JSON with helpful messages.
+
+difficulty: hard
+category: Feature
+tags: [node, express, auth]
+parser_name: pytest

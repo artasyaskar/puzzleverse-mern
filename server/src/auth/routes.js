@@ -1,8 +1,9 @@
 import express from 'express'
-import { rateLimit } from '../middleware/rateLimit.js'
+import { makeLoginRateLimiter } from '../middleware/rateLimit.js'
 import { registerUser, loginUser, refreshAccess, revokeRefresh, requireAuth } from './service.js'
 
 const router = express.Router()
+const loginLimiter = makeLoginRateLimiter({ windowMs: 60000, max: 5 })
 
 router.post('/register', async (req, res) => {
   try {
@@ -15,14 +16,21 @@ router.post('/register', async (req, res) => {
   }
 })
 
-router.post('/login', rateLimit({ windowMs: 60000, max: 5 }), async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body || {}
     const result = await loginUser(String(email || ''), String(password || ''))
+    if (req.resetLoginFailures) req.resetLoginFailures()
     return res.json(result)
   } catch (e) {
-    const code = e.code || 401
-    return res.status(code).json({ error: e.message || 'Invalid credentials' })
+    if (req.recordLoginFailure) req.recordLoginFailure()
+    const fails = req.getLoginFailures ? req.getLoginFailures() : 0
+    const isRateLimited = fails >= (req.rateLimitMax || 5)
+    const code = isRateLimited ? 429 : (e.code || 401)
+    const message = isRateLimited
+      ? 'Too many login attempts. Please try again later.'
+      : (e.message || 'Invalid credentials')
+    return res.status(code).json({ error: message })
   }
 })
 

@@ -1,0 +1,31 @@
+task: Robust Input Validation with Helpful 400s
+instructions: >-
+  Tighten input validation for auth endpoints and ensure 400 responses contain
+  clear, human-readable messages. Focus on the checks listed below.
+task_description: |
+  Task: Add strong, precise validation for /register and /login.
+
+  What must work (we will actually check these):
+  - /api/auth/register
+    - Missing email => 400 with a message mentioning "email".
+    - Missing password => 400 with a message mentioning "password".
+    - Invalid email format => 400 (mention "email").
+    - Password policy violation (min 8, letters+numbers) => 400 with helpful text.
+  - /api/auth/login
+    - Missing email or password => 400 with helpful messages (mention fields).
+  - Privacy
+    - Error responses must not include any password or passwordHash fields.
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/auth/routes.js — validate request bodies and return 400 with helpful messages.
+  - server/src/utils/validators.js — implement/extend helpers (email, min length, letters+numbers).
+  - server/src/utils/http.js — optional helpers for uniform 400 responses.
+
+  Notes (not graded directly):
+  - Keep responses JSON with an "error" string.
+  - Avoid leaking sensitive details.
+
+difficulty: hard
+category: Feature
+tags: [node, express, validation]
+parser_name: pytest

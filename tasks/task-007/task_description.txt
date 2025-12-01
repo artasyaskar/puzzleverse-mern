@@ -1,0 +1,32 @@
+task: Case Normalization and Duplicate-Proofing
+instructions: >-
+  Normalize and trim emails consistently across register and login flows while
+  preserving the original-case email for display. Prevent duplicates regardless
+  of case/whitespace differences.
+task_description: |
+  Task: Treat emails case-insensitively for identity, but keep original casing for display.
+
+  What must work (we will actually check these):
+  - Register with extra spaces in email should be trimmed; stored/displayed email keeps original
+    casing from the request (minus surrounding spaces).
+  - Registering the same email with different casing or extra spaces must return 400 and mention
+    "email" in the error.
+  - Login should succeed case-insensitively and ignore surrounding spaces in the email.
+  - /api/me should return the original-case email (from the successful registration), not the
+    lowercased/trimmed variant.
+  - Refresh and logout flows should be unaffected by user email casing decisions during login.
+  - Validation errors mentioning email format or duplication must include the word "email".
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/auth/service.js — store a lowercased key for lookup but preserve original-case email
+    for returned payloads.
+  - server/src/auth/routes.js — trim and normalize inputs; ensure error messages contain "email".
+  - server/src/utils/validators.js — add/ensure helpers for trim + email checks.
+
+  Notes (not graded directly):
+  - Never return passwords or password hashes in any response.
+
+difficulty: hard
+category: Feature
+tags: [node, express, auth]
+parser_name: pytest

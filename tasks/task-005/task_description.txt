@@ -1,0 +1,28 @@
+task: JWT Claims and Secret Precedence
+instructions: >-
+  Ensure access tokens include standard claims and that the JWT secret is read
+  from process.env.JWT_SECRET when provided. Add a small config header to the
+  health endpoint.
+task_description: |
+  Task: Strengthen JWT claims and configuration semantics.
+
+  What must work (we will actually check these):
+  - Access token (JWT) includes: sub, email, iat, exp. HS256 algorithm.
+  - exp should be in the near future (we won't wait; we only check it exists and is > now).
+  - If JWT_SECRET env var is set, it must be used; otherwise fall back to a safe default.
+  - /api/health response must include header X-App-Name with a non-empty value.
+  - /api/me must reject a token with a clearly expired exp (we will simulate an expired token).
+  - /api/me must reject a token signed with the wrong secret.
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/auth/service.js — token signing (claims, algorithm, verification) and secret precedence.
+  - server/src/index.js — set X-App-Name header on health.
+  - server/src/config.js — export APP_NAME and read JWT secret precedence if needed.
+
+  Notes (not graded directly):
+  - Keep HS256 throughout and do not leak secrets.
+
+difficulty: hard
+category: Feature
+tags: [node, express, jwt]
+parser_name: pytest

@@ -1,0 +1,27 @@
+task: Refresh Token Cap and Hygiene
+instructions: >-
+  Limit the number of outstanding refresh tokens per user and ensure trimmed
+  tokens are invalidated. Preserve rotation behavior.
+task_description: |
+  Task: Enforce a max count of outstanding refresh tokens per user and trim the oldest.
+
+  What must work (we will actually check these):
+  - Multiple successful logins create distinct refresh tokens.
+  - POST /api/auth/refresh invalidates the used token and returns a new one.
+  - Enforce a cap (e.g., max 5 tokens per user). When exceeded, remove the oldest.
+  - Attempting refresh with a trimmed (oldest) token returns 401.
+  - Rotation via /refresh keeps the cap intact (no growth beyond the limit).
+  - No refresh token appears in any response other than the field named refreshToken.
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/auth/service.js — manage per-user token list, cap, and trimming.
+  - server/src/index.js — no behavior change; expose if needed for testing.
+  - server/src/utils/collections.js — optional helpers (e.g., bounded queues) if desired.
+
+  Notes (not graded directly):
+  - Keep everything in memory and avoid logging token values.
+
+difficulty: hard
+category: Feature
+tags: [node, express, auth]
+parser_name: pytest

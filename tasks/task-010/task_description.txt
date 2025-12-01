@@ -1,0 +1,34 @@
+task: Request ID propagation and JSON errors
+instructions: >-
+  Ensure every response includes a stable request ID header and that error
+  responses are JSON with the same request ID echoed in the body. Respect a
+  client-provided X-Request-Id when safe; otherwise generate one.
+task_description: |
+  Task: Add consistent request ID propagation and structured error responses.
+
+  What must work (we will actually check these):
+  - All responses include the X-Request-Id header with a non-empty value.
+  - If the client sends X-Request-Id, the same value is echoed back on the
+    response header and, for error responses, in the JSON body as requestId.
+  - 404 for unknown routes returns JSON: { error: string, requestId: string } and
+    sets Content-Type: application/json.
+  - Validation errors (e.g., missing fields on /api/auth/login) return 400 JSON
+    with { error, requestId } and the header X-Request-Id matches body.requestId.
+  - Unauthorized on /api/me (missing/invalid token) returns 401 JSON with
+    { error, requestId } and proper headers.
+  - Two sequential requests without an incoming X-Request-Id must yield different
+    X-Request-Id values (uniqueness per request).
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/middleware/requestId.js — accept inbound X-Request-Id or generate one.
+  - server/src/middleware/errorHandler.js — ensure errors serialize to JSON with requestId.
+  - server/src/index.js — ensure X-Request-Id header is set on all responses and 404 handler returns JSON.
+
+  Notes (not graded directly):
+  - Do not include stack traces or internal details in error messages.
+  - Prefer a short, URL-safe request ID.
+
+difficulty: hard
+category: Feature
+tags: [node, express, http]
+parser_name: pytest

@@ -1,0 +1,28 @@
+task: Logout Idempotency and No-Content Semantics
+instructions: >-
+  Make the logout endpoint fully idempotent and return proper no-content
+  semantics. Ensure boundaries: only the given refresh token is revoked and
+  access tokens remain valid until they expire.
+task_description: |
+  Task: Adjust /api/auth/logout to be strictly idempotent and return 204 No Content.
+
+  What must work (we will actually check these):
+  - POST /api/auth/logout with a valid refresh token returns 204 (No Content) and an empty body.
+  - Calling /logout again with the same token also returns 204 and empty body (idempotent).
+  - After logout, attempting /api/auth/refresh with that token fails (400/401).
+  - Other refresh tokens for the same user remain valid and usable (no global revoke).
+  - Existing access tokens remain valid until expiry (logout affects only refresh tokens).
+  - Invalid or malformed refresh tokens sent to /logout must also return 204 (idempotent no-op).
+
+  Where to make your changes (paths you’ll likely touch):
+  - server/src/auth/routes.js — change /logout response to 204 with no body and idempotent behavior.
+  - server/src/auth/service.js — ensure revokeRefresh only removes the specified token.
+  - server/src/utils/http.js — helper for no-content responses (optional but recommended).
+
+  Notes (not graded directly):
+  - Do not log token values. Keep responses minimal and safe.
+
+difficulty: hard
+category: Feature
+tags: [node, express, auth]
+parser_name: pytest
