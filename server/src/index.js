@@ -32,7 +32,9 @@ app.use('/api/auth', authRouter)
 
 // Protected current-user route
 app.get('/api/me', requireAuth, (req, res) => {
-  res.json({ id: req.user.id, email: req.user.email })
+  res.setHeader('Cache-Control', 'no-store')
+  // res.json will set Content-Type: application/json automatically
+  res.json({ id: req.user.id, email: req.user.email, createdAt: req.user.createdAt })
 })
 
 const clientDist = path.resolve(__dirname, '../../client/dist')

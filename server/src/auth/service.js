@@ -154,7 +154,9 @@ export function requireAuth(req, res, next) {
   }
   try {
     const payload = verifyAccessToken(token)
-    req.user = { id: payload.sub, email: payload.email }
+    // Attach createdAt by looking up the in-memory user
+    const u = users.find(x => x.id === payload.sub) || { id: payload.sub, email: payload.email }
+    req.user = { id: u.id, email: u.email, createdAt: u.createdAt }
     return next()
   } catch (e) {
     return res.status(401).json({ error: 'Invalid or expired token' })
