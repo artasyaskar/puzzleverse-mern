@@ -1,0 +1,42 @@
+diff --git a/server/src/auth/service.js b/server/src/auth/service.js
+index 3def6d5..f081fa8 100644
+--- a/server/src/auth/service.js
++++ b/server/src/auth/service.js
+@@ -31,7 +31,8 @@ export function findUserByEmailLower(emailLower) {
+ }
+ 
+ export async function registerUser(email, password) {
+-  if (!validateEmail(email)) {
++  const emailTrim = String(email || '').trim()
++  if (!validateEmail(emailTrim)) {
+     const err = new Error('Invalid email format')
+     err.code = 400
+     throw err
+@@ -41,7 +42,7 @@ export async function registerUser(email, password) {
+     err.code = 400
+     throw err
+   }
+-  const emailLower = email.toLowerCase()
++  const emailLower = emailTrim.toLowerCase()
+   if (findUserByEmailLower(emailLower)) {
+     const err = new Error('Email already registered')
+     err.code = 400
+@@ -49,7 +50,7 @@ export async function registerUser(email, password) {
+   }
+   const id = crypto.randomUUID()
+   const passwordHash = await bcrypt.hash(password, 10)
+-  const user = { id, email, emailLower, passwordHash, createdAt: nowISO() }
++  const user = { id, email: emailTrim, emailLower, passwordHash, createdAt: nowISO() }
+   users.push(user)
+   return { id: user.id, email: user.email }
+ }
+@@ -73,7 +74,8 @@ function issueRefreshToken(userId) {
+ }
+ 
+ export async function loginUser(email, password) {
+-  const user = findUserByEmailLower(String(email || '').toLowerCase())
++  const emailLower = String(email || '').trim().toLowerCase()
++  const user = findUserByEmailLower(emailLower)
+   if (!user) {
+     const err = new Error('Invalid credentials')
+     err.code = 401
