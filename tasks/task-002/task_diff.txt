@@ -1,0 +1,34 @@
+diff --git a/server/src/index.js b/server/src/index.js
+index 655beee..d5c8aff 100644
+--- a/server/src/index.js
++++ b/server/src/index.js
+@@ -8,6 +8,8 @@ import requestId from './middleware/requestId.js'
+ import logger from './middleware/logger.js'
+ import errorHandler from './middleware/errorHandler.js'
+ import { PORT } from './config.js'
++import cors from './middleware/cors.js'
++import securityHeaders from './middleware/securityHeaders.js'
+ 
+ const __filename = fileURLToPath(import.meta.url)
+ const __dirname = path.dirname(__filename)
+@@ -17,6 +19,8 @@ app.use(requestId())
+ app.use(logger())
+ app.use(morgan('dev'))
+ app.use(express.json())
++app.use(cors())
++app.use(securityHeaders())
+ 
+ app.get('/api/health', (req, res) => {
+   res.json({ status: 'ok' })
+diff --git a/server/src/middleware/cors.js b/server/src/middleware/cors.js
+index 71f28d7..22d8d7f 100644
+--- a/server/src/middleware/cors.js
++++ b/server/src/middleware/cors.js
+@@ -3,6 +3,7 @@ export default function cors() {
+     res.header('Access-Control-Allow-Origin', '*')
+     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
+     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
++    res.header('Vary', 'Origin')
+     if (req.method === 'OPTIONS') return res.sendStatus(204)
+     next()
+   }

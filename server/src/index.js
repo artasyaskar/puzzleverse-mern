@@ -8,6 +8,8 @@ import requestId from './middleware/requestId.js'
 import logger from './middleware/logger.js'
 import errorHandler from './middleware/errorHandler.js'
 import { PORT } from './config.js'
+import cors from './middleware/cors.js'
+import securityHeaders from './middleware/securityHeaders.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -17,6 +19,8 @@ app.use(requestId())
 app.use(logger())
 app.use(morgan('dev'))
 app.use(express.json())
+app.use(cors())
+app.use(securityHeaders())
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })

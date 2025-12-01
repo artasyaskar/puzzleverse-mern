@@ -2,3 +2,4 @@ backend/node_modules
 node_modules
 .pytest_cache
 tasks/task-001/__pycache__
+tasks/task-002/__pycache__
