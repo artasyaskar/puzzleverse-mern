@@ -69,7 +69,7 @@ router.post('/refresh', async (req, res) => {
 router.post('/logout', async (req, res) => {
   const { refreshToken } = req.body || {}
   revokeRefresh(String(refreshToken || ''))
-  return res.status(200).json({ ok: true })
+  return res.status(204).end()
 })
 
 router.get('/me', requireAuth, (req, res) => {
