@@ -12,6 +12,9 @@ task_description: |
   - Attempting refresh with a trimmed (oldest) token returns 401.
   - Rotation via /refresh keeps the cap intact (no growth beyond the limit).
   - No refresh token appears in any response other than the field named refreshToken.
+  - Responses that issue a refresh token (/api/auth/login and /api/auth/refresh) include
+    an X-Refresh-Token-Count header with the current outstanding token count for the user
+    after the operation. The count must be a positive integer and never exceed the cap.
 
   Where to make your changes (paths you’ll likely touch):
   - server/src/auth/service.js — manage per-user token list, cap, and trimming.

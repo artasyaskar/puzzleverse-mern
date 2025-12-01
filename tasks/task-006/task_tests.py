@@ -124,3 +124,75 @@ import json as _json
 
 def json_dump(obj):
     return _json.dumps(obj, separators=(',', ':'), sort_keys=True)
+
+
+def test_exceeding_by_three_trims_three_oldest():
+    """Issuing MAX_TOKENS+3 tokens should trim exactly the first three oldest tokens."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    issued = []
+    for _ in range(MAX_TOKENS + 3):
+        r = login(email, 'Passw0rd1')
+        assert r.status_code == 200
+        issued.append(r.json()['refreshToken'])
+    # First three should be trimmed
+    for old in issued[:3]:
+        rr = refresh(old)
+        assert rr.status_code in (400, 401), f"old token should be trimmed: {old}"
+    # A couple of the newest should still work
+    for newest in issued[-2:]:
+        ok = refresh(newest)
+        assert ok.status_code == 200, ok.text
+
+
+def test_revoke_then_issue_keeps_within_cap_and_preserves_newest():
+    """Revoking one token then issuing a new one should not force-trim the newest tokens and stay within cap."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    rts = [login(email, 'Passw0rd1').json()['refreshToken'] for _ in range(MAX_TOKENS)]
+    newest = rts[-1]
+    # Revoke newest, then issue one more
+    lo = requests.post(url('/api/auth/logout'), json={'refreshToken': newest})
+    assert lo.status_code in (200, 204)
+    r_new = login(email, 'Passw0rd1')
+    assert r_new.status_code == 200
+    new_rt = r_new.json()['refreshToken']
+    # New token should work
+    ok1 = refresh(new_rt)
+    assert ok1.status_code == 200
+    # And an older-but-still-recent token should also work (not trimmed unexpectedly)
+    ok2 = refresh(rts[-2])
+    assert ok2.status_code == 200
+
+
+def test_login_sets_refresh_token_count_header_and_never_exceeds_cap():
+    """Login responses that issue refresh tokens must include X-Refresh-Token-Count <= MAX_TOKENS."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    counts = []
+    for i in range(MAX_TOKENS + 1):
+        r = login(email, 'Passw0rd1')
+        assert r.status_code == 200
+        hdr = r.headers.get('X-Refresh-Token-Count')
+        assert hdr is not None and hdr.isdigit(), f"missing/invalid header: {hdr}"
+        counts.append(int(hdr))
+    # Counts should be non-decreasing and capped at MAX_TOKENS
+    assert all(counts[i] <= counts[i+1] for i in range(len(counts)-1))
+    assert counts[-1] <= MAX_TOKENS
+
+
+def test_refresh_sets_refresh_token_count_header_and_never_exceeds_cap():
+    """Refresh responses must include X-Refresh-Token-Count and never exceed MAX_TOKENS after rotation."""
+    email = unique_email()
+    assert register(email, 'Passw0rd1').status_code == 201
+    # Fill to cap
+    rts = [login(email, 'Passw0rd1').json()['refreshToken'] for _ in range(MAX_TOKENS)]
+    # Rotate newest a few times
+    cur = rts[-1]
+    for _ in range(2):
+        rr = refresh(cur)
+        assert rr.status_code == 200
+        hdr = rr.headers.get('X-Refresh-Token-Count')
+        assert hdr is not None and hdr.isdigit()
+        assert int(hdr) <= MAX_TOKENS
+        cur = rr.json()['refreshToken']
