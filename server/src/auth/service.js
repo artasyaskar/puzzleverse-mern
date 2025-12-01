@@ -4,10 +4,12 @@ import crypto from 'crypto'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'
 const ACCESS_TTL_SEC = 5 * 60 // 5 minutes
+const MAX_REFRESH_TOKENS = 5 // per-user cap
 
 // In-memory stores
 const users = [] // { id, email, emailLower, passwordHash, createdAt }
 const refreshTokens = new Map() // token -> { userId, createdAt }
+const userTokenQueue = new Map() // userId -> [tokens in issue order]
 
 function nowISO() {
   return new Date().toISOString()
@@ -60,6 +62,13 @@ function signAccessToken(user) {
 function issueRefreshToken(userId) {
   const token = crypto.randomBytes(32).toString('hex')
   refreshTokens.set(token, { userId, createdAt: Date.now() })
+  const queue = userTokenQueue.get(userId) || []
+  queue.push(token)
+  while (queue.length > MAX_REFRESH_TOKENS) {
+    const oldest = queue.shift()
+    if (oldest) refreshTokens.delete(oldest)
+  }
+  userTokenQueue.set(userId, queue)
   return token
 }
 
@@ -100,6 +109,12 @@ export function refreshAccess(oldRefreshToken) {
   }
   // rotate: invalidate old, issue new
   refreshTokens.delete(oldRefreshToken)
+  const q = userTokenQueue.get(entry.userId)
+  if (q) {
+    const idx = q.indexOf(oldRefreshToken)
+    if (idx !== -1) q.splice(idx, 1)
+    userTokenQueue.set(entry.userId, q)
+  }
   const user = users.find(u => u.id === entry.userId)
   if (!user) {
     const err = new Error('User not found')
@@ -112,7 +127,16 @@ export function refreshAccess(oldRefreshToken) {
 }
 
 export function revokeRefresh(refreshToken) {
+  const entry = refreshTokens.get(refreshToken)
   refreshTokens.delete(refreshToken)
+  if (entry) {
+    const q = userTokenQueue.get(entry.userId)
+    if (q) {
+      const idx = q.indexOf(refreshToken)
+      if (idx !== -1) q.splice(idx, 1)
+      userTokenQueue.set(entry.userId, q)
+    }
+  }
 }
 
 export function requireAuth(req, res, next) {
