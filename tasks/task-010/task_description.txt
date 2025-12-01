@@ -9,13 +9,18 @@ task_description: |
   What must work (we will actually check these):
   - All responses include the X-Request-Id header with a non-empty value.
   - If the client sends X-Request-Id, the same value is echoed back on the
-    response header and, for error responses, in the JSON body as requestId.
-  - 404 for unknown routes returns JSON: { error: string, requestId: string } and
-    sets Content-Type: application/json.
+    response header on all routes. For error responses, the JSON body includes
+    requestId which must equal the response header value and, when provided,
+    must equal the incoming X-Request-Id.
+  - 404 for unknown routes returns JSON: { error: string, requestId: string },
+    sets Content-Type: application/json, and header X-Request-Id matches
+    body.requestId (echoing any incoming X-Request-Id).
   - Validation errors (e.g., missing fields on /api/auth/login) return 400 JSON
-    with { error, requestId } and the header X-Request-Id matches body.requestId.
+    with { error, requestId } and the header X-Request-Id matches body.requestId
+    (echoing any incoming X-Request-Id).
   - Unauthorized on /api/me (missing/invalid token) returns 401 JSON with
-    { error, requestId } and proper headers.
+    { error, requestId }, sets appropriate Content-Type, and the header
+    X-Request-Id matches body.requestId (echoing any incoming X-Request-Id).
   - Two sequential requests without an incoming X-Request-Id must yield different
     X-Request-Id values (uniqueness per request).
 

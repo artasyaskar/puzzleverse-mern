@@ -1,41 +1,55 @@
-task: This time around, we're setting up user access on your app with Node along with Express. We’re talking account creation, logging back in later, or simply jumping into what you’ve built.
+task: This time around, we're setting up how users get into your app - using Node along with Express. Imagine creating an account, returning afterward to sign in, or jumping right into what you need to do.
 instructions: >-
-Here's the breakdown:
+  Here's the breakdown:
 
-1. Sign-Up (POST /api/auth/register)
-If somebody joins without issues, we shoot back a 201 - so it's good to go - with their ID plus email.
-The email should catch attention. If someone already has it, we'll return a 400 error right away.
-Passwords must include some letters together with numbers. When they're too weak, expect a 400 error showing up.
-2. Log-In (POST /api/auth/login)
-We should check the message while making certain the password works.
-If it runs fine, we shoot back a 200 - everything’s set - including accessToken, refreshToken, plus the user info.
-Each time you sign in, pick up a fresh refresh token. At that moment, swap out the access token - this makes everything more secure.
-If you attempt to log in five times plus it fails, we respond with a 429 - blocking access briefly.
-3. User Profile (GET /api/me)
-Go this way instead. This one works only if the auth header has an access token - say, Bearer .
-Got a solid token? Pass the user’s ID with their email. Otherwise – shoot back a 401. Invalid one? No access.
-4. Token Stuff
-The access token should be a JSON Web Token with HS256 - put the user’s ID inside, also add their email plus when it expires.
-The refresh token needs to be a random string of chars - fairly long - to help protect stuff.
-To get a new token, make a POST request to /api/auth/refresh - include the old refresh token yet grab a brand-new one back. After that step, the prior token gets disabled instantly.
-Log out (POST /api/auth/logout) deletes the refresh token – so it won't work anymore. Try it once more? Works just fine, no hiccups.
-5. Privacy's Important
-Keep passwords private - don’t send them, not even scrambled ones, when using APIs.
+  1. Sign-Up (POST /api/auth/register)
+  If somebody joins without issues, we shoot off a 201 - shows it’s done - tossing in their ID plus email.
+  The email needs to pop. Not that we mind caps or small letters - everything flips to lowercase right away. If someone snagged it already, you'll hit a 400 error on the spot.
+  Passwords need letters plus numbers - must hit minimum length. Too weak? Too short? You'll see a 400 error instead. Each one’s gotta mix both, no skipping. Not long enough = blocked right away.
+  2. Log-In (POST /api/auth/login)
+  We should check the message while trying out if the password really gets you logged in. While logging in, it makes no difference if letters are big or small in the email.
+  If everything runs right, we’ll return a 200 – means okay – plus an accessToken, refreshToken, together with user info.
+  Each time you sign in, pick up a fresh refresh token. At that moment, swap out the access token - security gets stronger this way.
+  Exact response schemas:
+  - Register 201 response JSON:
+  { "user": { "id": "text", "also" "email": "text" } }
+  - Login 200 response JSON:
+  { "token": "text", "renewKey": "text", "person": { "userId": "text", "mailAddress": "text" } }
+  - Me 200 response JSON:
+  { "user": { "id": "text", "email": "text" } }
+  - Refresh 200 response JSON:
+  { "tokenAccess": "text", "tokenRefresh": "text" }
+  - Token access: JWT (HS256) data should have:
+  { "id": "text", "mail": "text", "end": number }
+  here "sub" stands for the user ID while "exp" means a UNIX time in seconds. the access token should stop working quickly - within ten minutes after it’s issued.
+  - Refresh token shape: a lowcase mix of numbers zero to nine plus letters a up to f - needs forty chars or more.
+  If you can't log in after five attempts, we’ll respond with a 429 - blocking entry temporarily.
+  3. User Profile (GET /api/me)
+  Go this direction now. This setup runs if the auth header’s got a token - say, Bearer.
+  If you have a valid token, pass the person's ID together with their email address. Otherwise - send back a 401 code. When it’s invalid? Shut access down.
+  4. Token Stuff
+  The access token must work like a JSON Web Token with HS256 - stick the user ID into "sub," throw in their email, then include an expiration marked "exp" set no later than 10 minutes after it’s created.
+  The refresh token should use only small letters and numbers from 0 to 9 plus a to f, nothing else - needs to be at least 40 characters long. Make it using random generation each time, then swap it out whenever someone logs in or renews access.
+  To get a new token, send a POST request to /api/auth/refresh - plug in the old refresh token, then grab a brand-new one back. Soon after that step, the earlier token just stops working by itself.
+  Logging out (POST /api/auth/logout) wipes the refresh token – so it won't work anymore. Try again? Works fine, no problems.
+
+  5. Privacy's Important
+  Keep your passwords safe - don't pass them around, especially when handling APIs, no matter how mixed up they seem.
 task_description: |
-This is the spot you’ll see the code
+  This is the spot you’ll see the code
 
-1. server/src/auth/service.js – deals with user accounts, manages password actions, while taking care of tokens too.
-2. server/src/auth/routes.js – this is how Express manages sign-ups, while handling logins, working on token updates, managing logout actions, or fetching user details.
-3. server/src/middleware/rateLimit.js – here’s where login attempts get slowed down.
-4. server/src/index.js – connects all parts at once.
+  1. server/src/auth/service.js – takes care of user profiles, deals with passwords, while handling tokens too.
+  2. server/src/auth/routes.js – this is where Express manages sign-ups, while handling logins at the same time; it covers token refreshes, oversees logout actions, or fetches user data whenever required.
+  3. server/src/middleware/rateLimit.js – this file handles how fast someone can try logging in.
+  4. server/src/index.js – links all pieces while keeping things running.
 
-Quick Tips:
+  How it works (not part of official rules; just helpful info):
 
-1. Set databases aside for now. Rather, store users and tokens directly in memory - like in a list.
-2. Keep passwords safe with hashing - go for bcrypt or argon2 when saving them. These options guard info from the start - going with one boosts long-term security - choose depending on your system - you can trust both.
-3. To slow down logins, track failed tries - reset counter if access succeeds. Try IP monitoring or email logs as alternatives. Trigger 429 error once five failures pile up.
-4. Use JWT HS256 instead. Keep the key in process.env.JWT_SECRET - also add a test version just in case.
-5. Keep the code simple to understand. That way, when something goes wrong, it's quicker to spot. Add clear warnings or little tips - they guide you right. This cuts down on guesswork later.
+  1. You can store users along with tokens in memory to make things easier while building.
+  2. You can use bcrypt - or try argon2 - when hashing passwords in your setup.
+  3. Count how many times someone fails to log in - after five tries, send back a 429 response.
+  4. Stick to basic code - toss in handy checks when it makes sense.
+
 difficulty: hard
 category: Feature
 tags: [node, express, auth]
