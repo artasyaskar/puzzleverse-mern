@@ -16,6 +16,11 @@ export function makeLoginRateLimiter({ windowMs = 60000, max = 5 } = {}) {
 
     req.rateLimitMax = max;
     req.getLoginFailures = () => entry.count;
+    req.getRetryAfterSeconds = () => {
+      const remainingMs = Math.max(0, (store.get(scopeKey)?.resetAt || 0) - Date.now());
+      const secs = Math.ceil(remainingMs / 1000);
+      return Math.max(1, secs || 0);
+    };
     req.recordLoginFailure = () => {
       const now2 = Date.now();
       let ent = store.get(scopeKey);

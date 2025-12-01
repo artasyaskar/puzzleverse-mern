@@ -3,3 +3,11 @@ node_modules
 .pytest_cache
 tasks/task-001/__pycache__
 tasks/task-002/__pycache__
+tasks/task-003/__pycache__
+tasks/task-004/__pycache__
+tasks/task-005/__pycache__
+tasks/task-006/__pycache__
+tasks/task-007/__pycache__
+tasks/task-008/__pycache__
+tasks/task-009/__pycache__
+tasks/task-010/__pycache__

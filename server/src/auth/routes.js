@@ -30,6 +30,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     const message = isRateLimited
       ? 'Too many login attempts. Please try again later.'
       : (e.message || 'Invalid credentials')
+    if (isRateLimited) {
+      const secs = req.getRetryAfterSeconds ? req.getRetryAfterSeconds() : 60
+      res.set('Retry-After', String(secs))
+    }
     return res.status(code).json({ error: message })
   }
 })
