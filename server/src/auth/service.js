@@ -123,7 +123,7 @@ export function refreshAccess(oldRefreshToken) {
   }
   const accessToken = signAccessToken(user)
   const refreshToken = issueRefreshToken(user.id)
-  return { accessToken, refreshToken }
+  return { accessToken, refreshToken, userId: user.id }
 }
 
 export function revokeRefresh(refreshToken) {
@@ -137,6 +137,11 @@ export function revokeRefresh(refreshToken) {
       userTokenQueue.set(entry.userId, q)
     }
   }
+}
+
+export function getOutstandingRefreshCount(userId) {
+  const q = userTokenQueue.get(userId) || []
+  return q.length
 }
 
 export function requireAuth(req, res, next) {

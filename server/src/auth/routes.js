@@ -1,6 +1,6 @@
 import express from 'express'
 import { makeLoginRateLimiter } from '../middleware/rateLimit.js'
-import { registerUser, loginUser, refreshAccess, revokeRefresh, requireAuth } from './service.js'
+import { registerUser, loginUser, refreshAccess, revokeRefresh, requireAuth, getOutstandingRefreshCount } from './service.js'
 
 const router = express.Router()
 const loginLimiter = makeLoginRateLimiter({ windowMs: 60000, max: 5 })
@@ -29,6 +29,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
     const result = await loginUser(String(email || ''), String(password || ''))
     if (req.resetLoginFailures) req.resetLoginFailures()
+    if (result && result.user && result.user.id) {
+      const count = getOutstandingRefreshCount(result.user.id)
+      res.set('X-Refresh-Token-Count', String(count))
+    }
     return res.json(result)
   } catch (e) {
     if (req.recordLoginFailure) req.recordLoginFailure()
@@ -50,7 +54,12 @@ router.post('/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body || {}
     const result = refreshAccess(String(refreshToken || ''))
-    return res.json(result)
+    const userId = result.userId
+    if (userId) {
+      const count = getOutstandingRefreshCount(userId)
+      res.set('X-Refresh-Token-Count', String(count))
+    }
+    return res.json({ accessToken: result.accessToken, refreshToken: result.refreshToken })
   } catch (e) {
     const code = e.code || 401
     return res.status(code).json({ error: e.message || 'Invalid refresh token' })
