@@ -35,6 +35,15 @@ else
 fi
 
 TASK_DIR="tasks/${TASK_ID}"
+# Remap task-<n> to task-<nnn> if needed
+if [[ ! -d "$TASK_DIR" && "$TASK_ID" =~ ^task-([0-9]+)$ ]]; then
+  NUM=$(printf "%03d" "${BASH_REMATCH[1]}")
+  ALT_ID="task-${NUM}"
+  if [[ -d "tasks/${ALT_ID}" ]]; then
+    TASK_ID="$ALT_ID"
+    TASK_DIR="tasks/${TASK_ID}"
+  fi
+fi
 if [[ ! -d "$TASK_DIR" ]]; then
   echo "Error: Task directory '$TASK_DIR' not found." >&2
   echo "Run '$0 list' to see available tasks." >&2
