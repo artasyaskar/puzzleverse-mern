@@ -19,7 +19,7 @@ puzzleverse-mern/
 │   │   └── task_tests.js
 │   └── ...               # Tasks 2-10
 ├── .gitignore
-├── docker-compose.yml
+├── docker-compose.yaml
 ├── Dockerfile
 ├── package.json
 └── README.md
