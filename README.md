@@ -2,29 +2,6 @@
 
 A full-stack web application built with the MERN stack (MongoDB, Express.js, React.js, Node.js). This project serves as a base for implementing 10 challenging programming tasks for LLM training.
 
-## Project Structure
-
-```
-puzzleverse-mern/
-├── client/                 # Frontend React application
-├── server/                 # Backend Node.js/Express application
-│   ├── config/            # Configuration files
-│   ├── controllers/       # Route controllers
-│   ├── middleware/        # Custom middleware
-│   ├── models/            # MongoDB models
-│   └── routes/            # API routes
-├── tasks/                 # Task definitions and tests
-│   ├── task-1/           # Task 1
-│   │   ├── task_description.txt
-│   │   └── task_tests.js
-│   └── ...               # Tasks 2-10
-├── .gitignore
-├── docker-compose.yaml
-├── Dockerfile
-├── package.json
-└── README.md
-```
-
 ## Prerequisites
 
 - Node.js (v16+)
