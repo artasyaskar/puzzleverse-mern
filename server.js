@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+require('colors');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -11,7 +12,7 @@ const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
 
 // Route files
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./server/routes/auth');
 
 // Initialize Express app
 const app = express();
@@ -66,7 +67,7 @@ app.get('/', (req, res) => {
 });
 
 // Error handling middleware
-const errorHandler = require('./middleware/error');
+const errorHandler = require('./server/middleware/errorHandler');
 app.use(errorHandler);
 
 // Handle 404
@@ -87,9 +88,7 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useCreateIndex: true,
-      useFindAndModify: false
+      useUnifiedTopology: true
     });
 
     console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline.bold);

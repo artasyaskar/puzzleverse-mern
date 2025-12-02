@@ -34,3 +34,5 @@ yarn-error.log*
 # Environment variables
 .env*
 !.env.example
+
+tasks/task-001/.pytest_cache
