@@ -35,6 +35,7 @@ COPY --from=builder /app/client/build ./client/build
 
 # Copy server files
 COPY server ./server
+COPY server.js ./
 
 # Environment variables
 ENV NODE_ENV=production
