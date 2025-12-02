@@ -1,30 +1,30 @@
 task: Robust Input Validation with Helpful 400s
 instructions: >-
-  Tighten input checks at login points – that way, invalid requests get a proper 400 error
-  basic notes you can follow without trouble. Look at what comes after this part instead.
+  Tighten login checks - messy tries now get a clean 400 error instead
+  basic ideas you could try without hassle – take a peek at whatever appears just below now.
 task_description: |
-  Sort out /register along with /login using strict validations. Make sure each input either runs smooth or stops quick.
+  Look over inputs closely at /api/auth/register - also peek into /api/auth/login. If something breaks, drop clear hints right away (error 400).
 
-  Here’s what should work - since we’ll try it on our own:
-  - /api/auth/register
-  - No email? You’ll get 400 along with a message stating it’s not there.
-  - If no password’s entered → you get a 400 error, plus a message pops up stating "password" is required.
-  - If the email’s wrong, you’ll get error 400 - mention "email".
-  Password rules ignored – must have 8 characters, some letters with numbers → triggers 400 and a plain error note.
-  - /api/auth/login
-  Got wrong details - say, email or password? You’ll see a 400 error. The message spells out exactly what's off. Hints per field make corrections quick.
+  What needs to work - since we're actually giving it a shot
+  - /api/auth/register validation
+  If the email's gone, you'll see a 400 error - yet 'email' appears somewhere within it.
+  If there’s no password set, you’ll get a 400 error - screen shows “password.”.
+  - Incorrect email settings trigger a 400 error, plus the word "email" shows up in the alert.
+  If the password’s way too short, you get a 400 error - no big deal, just small hints like someone tossing out ‘8’ randomly or casual remarks on length.
+  Passwords must have letters along with numbers - skip one, get a 400 error saying 'letter missing' or 'number required'. Leave out both? The response pops right away, calling out the mistake clear as day.
+  - /api/auth/login validation
+  If the email isn't there, you'll see a 400 error - pointing straight at "email" as the issue.
+  - If no password’s given, it responds with a 400 - points straight to the missing "password." .
   - Privacy
-  Error responses mustn't reveal any details about passwords - or anything tied to passwordHash - just skip it entirely.
+  Error messages must skip anything labeled password or passwordHash - just don't include them at all.
 
-  How to adjust stuff – areas you might change:
-  - server/src/auth/routes.js – look at user input, return 400 when invalid, show helpful error messages instead.
-  server/src/utils/validators.js – create or improve helpers such as checking emails, setting shortest allowed size, combining letters with numbers using if rules .
-  - server/src/utils/http.js – quick tools for steady 400 responses, just in case.
+  Play around with things here - places where changes might work better
+  - server/src/auth/routes.js – look into specifics; if not right, return 400 with straight clues fast.
+  - server/src/utils/validators.js – a set of helpers that look at email format, check minimum length, or spot if letters mix with digits.
+  - server/src/utils/http.js – useful helpers to send common 400 errors, depending on the situation, switching up methods as required.
 
-  Opinions – they won’t boost your result:
-  {"error": "Keep answers in JSON format with an error message string."}.
-  - Keep personal things hidden.
-
+  Remember - these won’t change how things turn out
+  - Give short alerts that are easy to get; skip any personal info entirely.
 difficulty: hard
 category: Feature
 tags: [node, express, validation]

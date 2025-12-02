@@ -24,16 +24,21 @@ def me(access_token):
 
 
 def test_register_trims_and_preserves_display_case():
+    """Registration trims spaces but preserves original-case email for display; no sensitive fields in response."""
     base = unique_email_base()
     pretty = f"  {base}User@Example.COM  "
     clean_display = f"{base}User@Example.COM"
     r = register(pretty, 'Passw0rd1')
     assert r.status_code == 201, r.text
     body = r.json()
+    # Schema: must include email (string)
+    assert isinstance(body.get('email'), str)
     assert body['email'] == clean_display
+    assert 'password' not in body and 'passwordHash' not in body
 
 
 def test_register_duplicate_ignores_case_and_spaces():
+    """Duplicate registration is detected ignoring case/whitespace and mentions 'email' in the error."""
     base = unique_email_base()
     e1 = f"{base}@example.com"
     e2 = f"  {base.upper()}@EXAMPLE.com  "
@@ -44,15 +49,22 @@ def test_register_duplicate_ignores_case_and_spaces():
 
 
 def test_login_ignores_case_and_spaces():
+    """Login succeeds ignoring case/whitespace in email; response must not include sensitive fields."""
     base = unique_email_base()
     display = f"{base}User@Example.com"
     raw = f"  {base}user@example.COM  "
     assert register(display, 'Passw0rd1').status_code == 201
     r = login(raw, 'Passw0rd1')
     assert r.status_code == 200, r.text
+    body = r.json()
+    # Schema: must include accessToken and refreshToken (strings)
+    assert isinstance(body.get('accessToken'), str)
+    assert isinstance(body.get('refreshToken'), str)
+    assert 'password' not in body and 'passwordHash' not in body
 
 
 def test_me_returns_original_case_email():
+    """/api/me returns original-case email from registration; response excludes sensitive fields."""
     base = unique_email_base()
     display = f"{base}User@Example.com"
     assert register(display, 'Passw0rd1').status_code == 201
@@ -60,10 +72,13 @@ def test_me_returns_original_case_email():
     at = r.json()['accessToken']
     m = me(at)
     assert m.status_code == 200
-    assert m.json()['email'] == display
+    data = m.json()
+    assert data['email'] == display
+    assert 'password' not in data and 'passwordHash' not in data
 
 
 def test_refresh_and_logout_not_affected_by_login_email_case():
+    """Refresh and logout continue to work regardless of login email casing; refresh response has no sensitive fields."""
     base = unique_email_base()
     display = f"{base}User@Example.com"
     assert register(display, 'Passw0rd1').status_code == 201
@@ -76,12 +91,18 @@ def test_refresh_and_logout_not_affected_by_login_email_case():
     # refresh should work
     rr = requests.post(url('/api/auth/refresh'), json={'refreshToken': rt})
     assert rr.status_code == 200
+    # Schema: refresh must return JSON with accessToken (string)
+    rr_body = rr.json()
+    assert isinstance(rr_body.get('accessToken'), str)
+    # ensure no sensitive fields in refresh response
+    assert 'password' not in rr_body and 'passwordHash' not in rr_body
     # logout should work
     lo = requests.post(url('/api/auth/logout'), json={'refreshToken': rt})
     assert lo.status_code in (200, 204)
 
 
 def test_validation_errors_include_email_word():
+    """Validation errors for bad email should return 400 and include the word 'email'."""
     r = register('not-an-email', 'Passw0rd1')
     assert r.status_code == 400
     assert 'email' in r.text.lower()

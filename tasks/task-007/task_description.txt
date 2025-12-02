@@ -1,30 +1,60 @@
 task: Case Normalization and Duplicate-Proofing
 instructions: >-
-  Normalize and trim emails consistently across register and login flows while
-  preserving the original-case email for display. Prevent duplicates regardless
+  Set up a clear email layout - trim out blank gaps, use consistent styles at registration or when signing in
+  keep showing the original email case. Halt duplicates whatever it takes
   of case/whitespace differences.
 task_description: |
-  Task: Treat emails case-insensitively for identity, but keep original casing for display.
+  Treat email addresses by ignoring case when figuring out who sent them, but display them just like they were typed. Keep the original caps only so they appear right on screen.
 
-  What must work (we will actually check these):
-  - Register with extra spaces in email should be trimmed; stored/displayed email keeps original
-    casing from the request (minus surrounding spaces).
-  - Registering the same email with different casing or extra spaces must return 400 and mention
-    "email" in the error.
-  - Login should succeed case-insensitively and ignore surrounding spaces in the email.
-  - /api/me should return the original-case email (from the successful registration), not the
-    lowercased/trimmed variant.
-  - Refresh and logout flows should be unaffected by user email casing decisions during login.
-  - Validation errors mentioning email format or duplication must include the word "email".
+  What needs to work - since we’ll check it on our own:
+  - When you sign up, emails with extra spaces are fixed automatically; but what you save or see stays exactly as you wrote it
+  casing taken from the input, no extra spaces near it.
+  - When signing up, using the same email with different letter sizes or extra spaces must return a 400 error while explaining why
+  Look at the email when a warning shows up.
+  Login doesn't care about big or small letters, while ignoring extra spaces near the email.
+  - /api/me should return the email with original letter case (the way it was typed when signing up), instead of changing it
+  lowercased/trimmed variant.
+  - Logging out or reloading works fine, regardless of how you enter your email during sign-in.
+  If something’s off with the address spelling or it’s taken, mention "email" in your note.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/auth/service.js — store a lowercased key for lookup but preserve original-case email
-    for returned payloads.
-  - server/src/auth/routes.js — trim and normalize inputs; ensure error messages contain "email".
-  - server/src/utils/validators.js — add/ensure helpers for trim + email checks.
+  Response schemas (explicit):
+  - POST /api/auth/register → 201 JSON
+    Required body fields:
+    { email: string }
+    Must NOT include: password, passwordHash.
 
-  Notes (not graded directly):
-  - Never return passwords or password hashes in any response.
+  - POST /api/auth/login → 200 JSON
+    Required body fields:
+    { accessToken: string, refreshToken: string }
+    Must NOT include: password, passwordHash.
+
+  - GET /api/me → 200 JSON
+    Required body fields:
+    { email: string }
+    Must NOT include: password, passwordHash.
+
+  - POST /api/auth/refresh → 200 JSON
+    Required body fields:
+    { accessToken: string }
+    Must NOT include: password, passwordHash.
+
+  - POST /api/auth/logout → 200 or 204
+    Body: empty.
+
+  - Errors such as duplicated or incorrect email entries when signing up trigger a 400 response shown in JSON format
+    Required body fields:
+    { error: string }
+    Error messages should mention "email" when the format's wrong or someone’s used it before.
+
+  Here's the spot to adjust things - places you might change
+  - server/src/auth/service.js – preserve the original-case email for returned payloads.
+  - server/src/auth/routes.js - tidy up spacing, align values properly; verify error messages include "email".
+  - server/src/utils/validators.js – add or check utilities dealing with trimming plus validating emails.
+
+  Keep in mind - these won’t affect your score:
+  - Never share passwords or their hashed versions in responses.
+  - Internal implementation choices (e.g., storing a lowercased lookup key) are optional; only external behavior
+    described above will be graded.
 
 difficulty: hard
 category: Feature

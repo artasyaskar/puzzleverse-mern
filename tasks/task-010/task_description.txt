@@ -1,37 +1,37 @@
 task: Request ID propagation and JSON errors
 instructions: >-
-  Ensure every response includes a stable request ID header and that error
-  responses are JSON with the same request ID echoed in the body. Respect a
-  client-provided X-Request-Id when safe; otherwise generate one.
+  Every response should have a consistent request ID label - toss in any errors too
+  responses return in JSON format, tied to the request ID within the payload. Keep it like that
+  If the client’s X-Request-Id is secure - otherwise, just create a fresh one.
 task_description: |
-  Task: Add consistent request ID propagation and structured error responses.
+  Keep track of requests using a consistent ID while sorting out error responses neatly.
 
-  What must work (we will actually check these):
+  What needs to work – we're checking it firsthand
   - All responses include the X-Request-Id header with a non-empty value.
-  - If the client sends X-Request-Id, the same value is echoed back on the
-    response header on all routes. For error responses, the JSON body includes
-    requestId which must equal the response header value and, when provided,
-    must equal the incoming X-Request-Id.
-  - 404 for unknown routes returns JSON: { error: string, requestId: string },
-    sets Content-Type: application/json, and header X-Request-Id matches
-    body.requestId (echoing any incoming X-Request-Id).
-  - Validation errors (e.g., missing fields on /api/auth/login) return 400 JSON
-    with { error, requestId } and the header X-Request-Id matches body.requestId
-    (echoing any incoming X-Request-Id).
-  - Unauthorized on /api/me (missing/invalid token) returns 401 JSON with
-    { error, requestId }, sets appropriate Content-Type, and the header
-    X-Request-Id matches body.requestId (echoing any incoming X-Request-Id).
-  - Two sequential requests without an incoming X-Request-Id must yield different
-    X-Request-Id values (uniqueness per request).
+  If the client sends X-Request-Id, the same thing shows up in reply - nothing altered
+  reply info on each path. If issues pop up, the data bundle arrives with
+  requestId needs to line up with what's in the response header - plus, when it’s there,
+  needs to line up with the incoming X-Request-Id.
+  - 404 for bad paths returns JSON: { error: string, requestId: string } - changes layout every time
+  makes sure X-Request-Id is set, sets Content-Type to application/json
+  body.requestId copies the incoming X-Request-Id each time it shows up.
+  - If stuff’s missing at /api/auth/login, the system shoots back a 400 error as JSON
+  using { error, requestId }, however the header X-Request-Id matches body.requestId
+  (echoing any X-Request-Id that arrives).
+  - Hitting /api/me without proper access - like no token or an invalid one - triggers a 401 response, served as JSON
+  { error, requestId } – it picks the correct Content-Type while adding a header
+  X-Request-Id matches the requestId in the body - same one sent is the one returned. When X-Request-Id shows up, it echoes right back. No changes made; what’s received goes out again.
+  - Missing an X-Request-Id during two consecutive calls leads to different results each time
+  X-Request-Id gives a different ID every time - never duplicates. Each number gets used once.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/middleware/requestId.js — accept inbound X-Request-Id or generate one.
-  - server/src/middleware/errorHandler.js — ensure errors serialize to JSON with requestId.
-  - server/src/index.js — ensure X-Request-Id header is set on all responses and 404 handler returns JSON.
+  Here's the place to change things - areas you'll likely adjust
+  - server/src/middleware/requestId.js – when X-Request-Id comes in, grab that; if missing, generate fresh instead.
+  - server/src/middleware/errorHandler.js – check that errors come out as JSON with requestId included.
+  - server/src/index.js – ensure each reply comes with an X-Request-Id header; meanwhile, the 404 handler returns info in JSON form.
 
-  Notes (not graded directly):
-  - Do not include stack traces or internal details in error messages.
-  - Prefer a short, URL-safe request ID.
+  Keep in mind – these don’t affect your score
+  Show mistakes without revealing hidden codes or system details if something breaks.
+  - Pick a short, web-suitable request ID.
 
 difficulty: hard
 category: Feature

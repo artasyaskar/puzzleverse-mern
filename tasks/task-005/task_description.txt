@@ -1,26 +1,27 @@
 task: JWT Claims and Secret Precedence
 instructions: >-
-  Check that access tokens include standard details - grab the JWT secret right too
-  If available, go with process.env.JWT_SECRET - add a short setup hint up front
-  health endpoint.
+  Check that access tokens include required claims - fall back to process.env.JWT_SECRET when possible.
+  Swap in X-App-Name at /api/health instead. Maybe you’re already using it there.
 task_description: |
-  Boost how JWT data is defined, also improve setup clarity.
+  Keep an eye on the JWT details - get every part right - choose a reliable method upfront. Check how strong the secret is, step by step. Handle settings carefully, but don't overdo it.
 
-  Here's what should work – since we'll try it on our own
-  - The access token (JWT) contains: sub, email, iat, exp. Runs on HS256 instead - unless that’s a mistake. Might get updated sometime. For now, this is what we’ve got.
-  - exp should happen shortly (we're not hanging around - just confirming it's set but not immediate).
-  If the JWT_SECRET variable’s around, go with it - else, grab a solid backup choice.
-  - The /api/health response needs the X-App-Name header set to a clear value.
-  - The /api/me endpoint must disable a token once it's expired - we'll check this by testing with an old one.
-  - The /api/me endpoint must reject a token when it’s signed using a wrong secret.
+  What’s got to work - since we’ll try it out ourselves -
+  Login hands you a JWT - your entry pass - signed with HS256. This token carries your sub along with email info. Inside, there's also iat, pointing to creation time. Exp marks when it quits being valid.
+  - points work later on (keep going after they’re given) but also stick around longer.
+    If JWT_SECRET is set in the environment, go ahead and verify tokens with it - otherwise, just reject them
+    tickets locked with the default code. If JWT_SECRET isn't there, it uses a backup key instead.
+  - The /api/health request returns 200; also, there's an X-App-Name header that’s present and not blank.
+    The /api/me call gives a 401 if the token's expired, even if the original secret was right - response stays the same either way.
+    The /api/me endpoint gives back a 401 when the token’s secret isn't right - access fails with a bad key.
+  - Once you log in the usual way, /api/me picks up a working access token - after that, it sends back your email.
 
-  Over here’s where you’ll adjust things - places you might change
-  - server/src/auth/service.js – makes tokens, setting claims along with encryption type; verifies secrets by their importance level.
-  - server/src/index.js – includes X-App-Name header while verifying health, using a small tweak inside the check routine that runs each time.
-  - server/src/config.js – pass along APP_NAME, pull JWT secret only when needed instead.
+  Here’s the spot to change things - places you might adjust
+  - server/src/auth/service.js – generate HS256 tokens holding required claims, then verify them using the correct secret.
+  - server/src/index.js – sets X-App-Name header in /api/health responses using output config, but only when checks are running, otherwise leaves it out unless triggered.
 
-  Thoughts (not included in your total):
-  Use HS256 consistently - else, keys could leak through gaps.
+  Opinions – they won’t affect your score:
+  Pass JWT_SECRET via environment variables while testing – use this to see how priority behaves.
+  - Maybe toss in a quick line about config'ing JWT_SECRET inside README if it's necessary.
 
 difficulty: hard
 category: Feature

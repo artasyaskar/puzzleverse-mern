@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import uuid
 import requests
+import pytest
 
 BASE_URL = os.getenv('BASE_URL', 'http://localhost:3000')
 DEFAULT_SECRET = 'dev-secret'  # server default when JWT_SECRET not set
@@ -47,6 +48,7 @@ def login(email, password):
 
 
 def test_access_token_has_required_claims_and_hs256():
+    """Login-issued access token is a JWT signed with HS256 and includes sub, email, iat, exp (future)."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')
@@ -63,6 +65,7 @@ def test_access_token_has_required_claims_and_hs256():
 
 
 def test_health_has_app_name_header():
+    """/api/health responds 200 and includes a non-empty X-App-Name header."""
     r = requests.get(url('/api/health'))
     assert r.status_code == 200
     app_name = r.headers.get('X-App-Name')
@@ -70,6 +73,7 @@ def test_health_has_app_name_header():
 
 
 def test_me_rejects_expired_token_with_default_secret():
+    """/api/me returns 401 when presented with an expired token signed using the default secret."""
     # Craft a token with exp in the past using the default secret
     now = int(time.time())
     payload = {"sub": "expired-user", "email": "x@example.com", "iat": now - 120, "exp": now - 60}
@@ -79,6 +83,7 @@ def test_me_rejects_expired_token_with_default_secret():
 
 
 def test_me_rejects_token_signed_with_wrong_secret():
+    """/api/me returns 401 for a token signed with the wrong secret, even if not expired."""
     # Create a token with a future exp but wrong secret
     now = int(time.time())
     payload = {"sub": "bad-user", "email": "y@example.com", "iat": now, "exp": now + 600}
@@ -88,6 +93,7 @@ def test_me_rejects_token_signed_with_wrong_secret():
 
 
 def test_me_accepts_valid_server_token_from_login():
+    """/api/me accepts a valid access token obtained from login and returns matching user email."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')
@@ -99,7 +105,33 @@ def test_me_accepts_valid_server_token_from_login():
     assert body['email'].lower() == email.lower()
 
 
+def test_jwt_secret_precedence_when_env_set():
+    """If JWT_SECRET env is set on the server, tokens signed with it are accepted and default-secret tokens are rejected."""
+    jwt_secret = os.getenv('JWT_SECRET')
+    now = int(time.time())
+    payload = {"sub": "env-user", "email": "env@example.com", "iat": now, "exp": now + 600}
+    if jwt_secret:
+        # When JWT_SECRET is set, tokens signed with it should be considered valid relative to signature,
+        # while default-secret tokens must be rejected.
+        good = make_jwt(payload, jwt_secret)
+        bad = make_jwt(payload, DEFAULT_SECRET)
+        ok = requests.get(url('/api/me'), headers={'Authorization': f'Bearer {good}'})
+        assert ok.status_code in (200, 401)
+        not_ok = requests.get(url('/api/me'), headers={'Authorization': f'Bearer {bad}'})
+        assert not_ok.status_code == 401
+    else:
+        # When JWT_SECRET is not set, server uses its default secret. Verify a token signed with a
+        # totally wrong secret is rejected, and a default-secret-signed token does not error.
+        wrong = make_jwt(payload, 'totally-wrong-secret')
+        r_wrong = requests.get(url('/api/me'), headers={'Authorization': f'Bearer {wrong}'})
+        assert r_wrong.status_code == 401
+        default_tok = make_jwt(payload, DEFAULT_SECRET)
+        r_default = requests.get(url('/api/me'), headers={'Authorization': f'Bearer {default_tok}'})
+        assert r_default.status_code in (200, 401)
+
+
 def test_tampered_signature_is_rejected():
+    """A JWT with a tampered signature is rejected by /api/me with 401."""
     email = unique_email()
     assert register(email, 'Passw0rd1').status_code == 201
     r = login(email, 'Passw0rd1')

@@ -1,25 +1,26 @@
-task: Enrich /api/me payload and response headers
+task: Check out /api/me for extra details - also notice the response headers it returns
 instructions: >-
-  Extend the /api/me response to include stable fields and appropriate response
-  headers. Keep the response privacy-preserving.
+  Expand the /api/me output to show steady details alongside a straightforward reply
+  Use clear titles. Make sure answers protect private details.
 task_description: |
-  Task: Enrich the /api/me endpoint and set sensible headers.
+  Update the /api/me spot with extra details, also use logical headers. Each piece fits together without clutter - keep it clean, nothing fancy.
 
-  What must work (we will actually check these):
-  - /api/me returns a JSON body with: id (string), email (string), createdAt (ISO string).
-  - The response must not include password or passwordHash.
-  - /api/me responses include Cache-Control: no-store and Content-Type: application/json.
-  - Multiple calls with the same token return the same values (id/email/createdAt stable).
-  - Missing or invalid token returns 401 (JSON with an error message).
-  - Health endpoint must still work and not be affected by these changes.
+  What needs to work - since we’re checking it on our own:
+  - The endpoint /api/me returns a JSON containing: id (string), email (string), createdAt (in date-time format).
+  The response must skip passwords; also leave out passwordHash.
+  - /api/me responses include Cache-Control: no-store plus set Content-Type: application/json.
+  - Same token, repeated calls - results stay the same; details such as id or email don't shift no matter how often you try.
+  - No valid token? You get a 401 response along with a JSON alert showing the error detail
+  Content-Type: application/json.
+  The health check keeps working like before, giving back status ok.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/auth/service.js — ensure createdAt is tracked and available in auth context.
-  - server/src/index.js — set headers (no-store/json) on /api/me responses.
-  - server/src/utils/http.js — optional helpers for headers and typed JSON responses.
+  This is where you tweak stuff - spots that could use a shift
+  - server/src/auth/service.js – verify createdAt gets stored right, also shows up when setting up auth.
+  - server/src/index.js – checks some stuff before setting no-store or json headers on /api/me replies.
+  - server/src/utils/http.js – handy tools for managing headers, while taking care of typed JSON output.
 
-  Notes (not graded directly):
-  - Do not include any internal fields in the /api/me payload.
+  Tips - these won't change your result.
+  Leave out private details from the /api/me response.
 
 difficulty: hard
 category: Feature

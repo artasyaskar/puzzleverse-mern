@@ -1,26 +1,26 @@
 task: Logout Idempotency and No-Content Semantics
 instructions: >-
-  Make the logout endpoint fully idempotent and return proper no-content
-  semantics. Ensure boundaries: only the given refresh token is revoked and
-  access tokens remain valid until they expire.
+  Set up the logout so it works every time - send back a clean no-content response when done
+  meaning. Keep limits clear: just that one refresh token gets canceled or
+  Access tokens stay active till their time runs out.
 task_description: |
-  Task: Adjust /api/auth/logout to be strictly idempotent and return 204 No Content.
+  Fix /api/auth/logout so it always works the same way, no matter how many times called. Use 204 No Content as response each time instead.
 
-  What must work (we will actually check these):
-  - POST /api/auth/logout with a valid refresh token returns 204 (No Content) and an empty body.
-  - Calling /logout again with the same token also returns 204 and empty body (idempotent).
-  - After logout, attempting /api/auth/refresh with that token fails (400/401).
-  - Other refresh tokens for the same user remain valid and usable (no global revoke).
-  - Existing access tokens remain valid until expiry (logout affects only refresh tokens).
-  - Invalid or malformed refresh tokens sent to /logout must also return 204 (idempotent no-op).
+  Here’s what needs to run - because we’re going to test it ourselves
+  - Hitting POST /api/auth/logout using a working refresh token gives back 204 (No Content), also no data in response.
+  - Hitting /logout once more using that same token just gives back 204 plus no data (it's idempotent).
+  - Once you log out, using /api/auth/refresh with that token doesn't work - gives 400 or 401.
+  - Other refresh tokens for the same person still work fine - none get wiped out altogether.
+  Old access tokens still work till they expire - logging out just clears refresh ones.
+  - Sending a broken or wrong refresh token to /logout should still give back 204 - same result every time, no matter how many times it’s tried.
 
-  Where to make your changes (paths you’ll likely touch):
-  - server/src/auth/routes.js — change /logout response to 204 with no body and idempotent behavior.
-  - server/src/auth/service.js — ensure revokeRefresh only removes the specified token.
-  - server/src/utils/http.js — helper for no-content responses (optional but recommended).
+  Where you’ll tweak things (spots you might edit):
+  - server/src/auth/routes.js - tweak /logout to return 204, no payload, works same every time.
+  - server/src/auth/service.js - make sure revokeRefresh deletes just that one token, not others.
+  - server/src/utils/http.js - tool for handling empty replies (not required, though useful).
 
-  Notes (not graded directly):
-  - Do not log token values. Keep responses minimal and safe.
+  Notes - won't affect your score
+  Don't record token details. Keep answers short, plus secure.
 
 difficulty: hard
 category: Feature
