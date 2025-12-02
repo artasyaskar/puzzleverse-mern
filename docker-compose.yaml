@@ -29,7 +29,7 @@ services:
       - app-network
 
   mongo-express:
-    image: mongo-express:1.0.0-20.4.0
+    image: mongo-express:1.0.0
     container_name: puzzleverse-mongo-express
     restart: always
     ports:
@@ -37,6 +37,7 @@ services:
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongo
       - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     depends_on:
       - mongo
     networks:
