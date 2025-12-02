@@ -1,25 +1,41 @@
-# Node.js multi-stage image for MERN repo and task testing
-FROM node:20-alpine AS base
+# Build stage
+FROM node:18-alpine as builder
+
 WORKDIR /app
 
-# Install dependencies using workspaces
-COPY package.json .
-COPY client/package.json client/package.json
-COPY server/package.json server/package.json
-RUN npm install --ignore-scripts --workspaces --include-workspace-root
+# Copy package files
+COPY package*.json ./
+COPY client/package*.json ./client/
 
-# Copy source and build client
+# Install dependencies
+RUN npm install
+RUN cd client && npm install && cd ..
+
+# Copy source files
 COPY . .
-RUN npm run build -w client
 
-# Add Python and pytest tooling for task suites using pytest (use Alpine packages)
-RUN apk add --no-cache bash python3 py3-pytest py3-requests
+# Build React app
+RUN cd client && npm run build
 
-# Non-root user and permissions
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-  && chown -R appuser:appgroup /app \
-  && find /app -type f -name "*.sh" -exec chmod +x {} +
-USER appuser
+# Production stage
+FROM node:18-alpine
 
-# Default entrypoint runs the task tests; grader will pass <task-id>
-ENTRYPOINT ["./run_tests.sh"]
+WORKDIR /app
+
+# Copy built React app
+COPY --from=builder /app/client/build ./client/build
+
+# Copy server files
+COPY package*.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY server ./server
+
+# Environment variables
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Expose port
+EXPOSE 5000
+
+# Start the app
+CMD ["node", "server.js"]

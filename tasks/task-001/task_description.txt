@@ -1,62 +1,42 @@
-task: This time around, you pick how people get into your app – Node with Express handles the rest. Picture someone signing up fresh, then returning later to sign in, or just diving right into the core section.
-instructions: >-
-  Here's the breakdown:
-
-  1. Sign-Up (POST /api/auth/register)
-  If somebody joins without issues, we send a quick 201 – shows it’s done – including their ID plus an email note.
-  The email needs to catch attention. Skip the caps – they just lead to rejection. If someone already grabbed it, you'll hit a 400 error right off the bat.
-  Passwords need to be really long - mix in digits along with letters as well. Too short or no variety? Send it back using 400.
-  2. Log-In (POST /api/auth/login)
-  We can try logging in by typing the password ourselves. While signing in, it makes no difference if the email is big letters or small ones.
-  If everything works, we return a 200 – that means all’s good – then you receive an accessToken; at the same time, there's a refreshToken plus info about the user.
-  Each time you sign in, pick up a fresh code - switched after confirming your identity.
-  Clear advice for replies – shaped just right no matter the exam type
-   - Register 201 response JSON:
-
-      { "id": "string", "email": "string" }
-
-     - Login 200 response JSON:
-
-      { "accessToken": "string", "refreshToken": "string", "user": { "id": "string", "email": "string" } }
-
-     - Me 200 response JSON:
-
-      { "id": "string", "email": "string" }
-
-     - Refresh 200 response JSON:
-
-      { "accessToken": "string", "refreshToken": "string" }
-
-     - Access token (JWT) requirements:
-
-      Signed with HS256. Payload includes: { "sub": "string", "email": "string", "exp": integer }. That’s exactly what it contains.
-  Note: 'exp' shows how many seconds remain - devices count down nonstop once an item’s created. Right from that instant, the timer begins ticking. Usually this period is short, most cases less than 600 seconds flat. It finishes fast post-start, no lingering or holdups.
-  Use lowercase letters mixed with digits from a to f or 0 to 9. Keep it above the shortest allowed size.
-  If you mess up logging in five times, get ready - error 429 pops up, so your entry’s on hold for a while.
-  3. User Profile (GET /api/me)
-  Requires the right Bearer token to run. When valid, returns the user ID together with their email address. Invalid or absent tokens result in a 401 error response.
-  4. Token Details
-  The access token is a JWT locked down with HS256 - it must have sub (that's the user ID), toss in email, then slap on an exp timestamp in UNIX format, set no more than 10 minutes ahead.
-  The refresh token's simply a messy string of lowercase chars and digits in hexadecimal - gotta make it sufficiently lengthy. Each login or call to /api/auth/refresh swaps it out instantly; right then, the previous version becomes useless.
-  Logging out (POST /api/auth/logout) removes the current refresh token - can't use it again. Try logging out a second time with that same token? It still works, no problems at all. System deals with repeat requests like it's nothing.
-
-  5. Privacy's Important
-  Keep your passwords safe - don’t pass them around, especially when dealing with APIs, no matter how mixed up they seem.
 task_description: |
-  This is the spot - you’ll see the code here
+Task: Implement User Authentication System
 
-  1. server/src/auth/service.js – manages user profiles, deals with passwords while also managing access tokens.
-  2. server/src/auth/routes.js – Express deals with sign-ups right here while handling log-ins at the same time. When necessary, it updates tokens, manages logging out, or fetches user details if asked.
-  3. server/src/middleware/rateLimit.js – handles how fast logins happen. When a user tries way too often, delays kick in slowly, stopping sudden waves of retries. That shuts down bots or attackers trying random passwords. As a result, force-cracking passwords fails.
-  4. server/src/index.js links all pieces - still makes things run smoothly.
+Instructions:
+Implement a complete user authentication system for the PuzzleVerse application. The system should include user registration, login, and protected routes. The implementation must include both frontend and backend components.
 
-  This is it - no extras, simply a short note:
+Background:
+User authentication is a critical component of most web applications. This task requires you to implement a secure authentication system using JWT (JSON Web Tokens) for session management.
 
-  1. You might store user tokens in memory - useful while configuring things.
-  2. You might try bcrypt – or perhaps argon2 – when setting up password hashing. Otherwise, choose something that works for your case without making things messy.
-  3. Watch logins closely - if there’s a flood, respond with a 429 after the fifth one.
-  4. Just keep things basic - toss in fast checks when they make sense.
+Requirements:
+1. Backend:
+   - Create User model with fields: name, email, password (hashed), and timestamps
+   - Implement registration endpoint (/api/users/register)
+   - Implement login endpoint (/api/users/login)
+   - Implement protected route middleware
+   - Add password hashing using bcrypt
+   - Implement JWT token generation and verification
+
+2. Frontend:
+   - Create registration form with validation
+   - Create login form with validation
+   - Implement authentication context for state management
+   - Add protected routes
+   - Store JWT in HTTP-only cookies
+
+3. Security:
+   - Implement input validation
+   - Hash passwords before storing
+   - Set secure, HTTP-only cookies for JWT
+   - Add rate limiting for auth endpoints
+   - Implement proper error handling
+
+4. Testing:
+   - Write comprehensive tests for all endpoints
+   - Test error cases (invalid credentials, missing fields, etc.)
+   - Test protected routes
+   - Test token expiration and refresh
+
 difficulty: hard
 category: Feature
-tags: [node, express, auth]
+tags: [authentication, security, jwt, react, nodejs]
 parser_name: pytest

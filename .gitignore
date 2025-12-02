@@ -1,13 +1,36 @@
-backend/node_modules
-node_modules
-.pytest_cache
-tasks/task-001/__pycache__
-tasks/task-002/__pycache__
-tasks/task-003/__pycache__
-tasks/task-004/__pycache__
-tasks/task-005/__pycache__
-tasks/task-006/__pycache__
-tasks/task-007/__pycache__
-tasks/task-008/__pycache__
-tasks/task-009/__pycache__
-tasks/task-010/__pycache__
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+
+# Docker
+# .dockerignore
+# Dockerfile
+# docker-compose.yml
+
+# Environment variables
+.env*
+!.env.example

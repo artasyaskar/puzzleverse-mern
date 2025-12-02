@@ -1,9 +1,58 @@
+version: '3.9'
+
 services:
   app:
-    build: ../..
-    image: puzzle/puzzleverse-mern:latest
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: puzzleverse/task-001-app
+    container_name: task-001-app
+    ports:
+      - "5001:5000"  # Different port to avoid conflicts
     environment:
-      - TASK_ID=task-001
-      - BASE_URL=http://localhost:3000
-      - JWT_SECRET=dev-secret
-    command: ["./tasks/task-001/run-tests.sh"]
+      - NODE_ENV=test
+      - MONGODB_URI=mongodb://mongo:27017/puzzleverse_task_001
+      - JWT_SECRET=task_001_test_secret
+      - JWT_EXPIRE=1d
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: task-001-mongo
+    ports:
+      - "27018:27017"  # Different port to avoid conflicts
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  test:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: puzzleverse/task-001-test
+    container_name: task-001-test
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TEST_BASE_URL=http://app:5000/api
+    volumes:
+      - .:/app/tasks/task-001
+    working_dir: /app/tasks/task-001
+    command: >
+      sh -c "pip install pytest requests && 
+             python -m pytest task_tests.py -v"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

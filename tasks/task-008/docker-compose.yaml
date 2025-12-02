@@ -1,8 +1,0 @@
-services:
-  app:
-    build: .
-    environment:
-      - TASK_ID=task-008
-    command: ["./run_tests.sh", "task-008"]
-    ports:
-      - "3000:3000"
