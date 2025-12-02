@@ -3,16 +3,20 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 COPY client/package*.json ./client/
 
-# Install dependencies
+# Install root dependencies
 RUN npm install
-RUN cd client && npm install && cd ..
 
-# Copy source files
-COPY . .
+# Install client dependencies and build
+WORKDIR /app/client
+RUN npm install
+
+# Copy client source
+WORKDIR /app
+COPY client ./client
 
 # Build React app
 RUN cd client && npm run build
@@ -22,12 +26,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install production dependencies
+COPY package*.json ./
+RUN npm install --only=production
+
 # Copy built React app
 COPY --from=builder /app/client/build ./client/build
 
 # Copy server files
-COPY package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
 COPY server ./server
 
 # Environment variables
