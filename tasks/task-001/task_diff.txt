@@ -1,0 +1,42 @@
+diff --git a/.gitignore b/.gitignore
+index bfc84bc..4d92d47 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -35,4 +35,5 @@ yarn-error.log*
+ .env*
+ !.env.example
+ 
+-tasks/task-001/.pytest_cache
+\ No newline at end of file
++tasks/task-001/.pytest_cache
++tasks/task-001/__pycache__
+\ No newline at end of file
+diff --git a/server/middleware/auth.js b/server/middleware/auth.js
+index 145e13b..59226f3 100644
+--- a/server/middleware/auth.js
++++ b/server/middleware/auth.js
+@@ -9,9 +9,12 @@ exports.protect = async (req, res, next) => {
+   // Set token from Bearer token in header
+   if (
+     req.headers.authorization &&
+-    req.headers.authorization.startsWith('Bearer')
++    typeof req.headers.authorization === 'string'
+   ) {
+-    token = req.headers.authorization.split(' ')[1];
++    const parts = req.headers.authorization.split(' ');
++    if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
++      token = parts[1];
++    }
+   }
+   // Set token from cookie
+   else if (req.cookies.token) {
+@@ -27,6 +30,9 @@ exports.protect = async (req, res, next) => {
+     // Verify token
+     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+     req.user = await User.findById(decoded.id);
++    if (!req.user) {
++      return next(new ApiError('Not authorized to access this route', 401));
++    }
+     next();
+   } catch (err) {
+     return next(new ApiError('Not authorized to access this route', 401));
