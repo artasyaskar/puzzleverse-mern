@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    image: puzzleverse/task-001-app:latest
+    container_name: task-001-app
+    environment:
+      - NODE_ENV=test
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/puzzleverse_task001
+      - JWT_SECRET=supersecret_for_tests
+      - JWT_EXPIRE=1d
+      - JWT_COOKIE_EXPIRE=1
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      - mongo
+    networks:
+      - tasknet
+
+  mongo:
+    image: mongo:6.0
+    container_name: task-001-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - task001-mongo-data:/data/db
+    networks:
+      - tasknet
+
+  tester:
+    image: python:3.11-slim
+    container_name: task-001-tester
+    working_dir: /tests
+    volumes:
+      - ./:/tests
+    environment:
+      - TARGET_BASE_URL=http://app:5000
+    depends_on:
+      - app
+    networks:
+      - tasknet
+    command: bash -lc "pip install --no-cache-dir pytest requests tenacity pyjwt && pytest -q task_tests.py"
+
+networks:
+  tasknet: {}
+
+volumes:
+  task001-mongo-data: {}

@@ -1,0 +1,44 @@
+task_description: |
+  Task: Harden auth middleware and error handling 
+  Instructions:
+    Background:
+      You will fix three critical backend issues so that authentication and error-handling behave correctly. The provided test suite (pytest) initially FAILS. After you fix exactly the three specified files, all eight tests will PASS.
+
+    Critical tested requirements:
+      - Registration returns 201, sets an HttpOnly JWT cookie, and response includes `token` and `user` fields.
+      - The HttpOnly cookie set by registration must authenticate `/api/v1/auth/me` successfully.
+      - Duplicate email registration returns 400 with a duplicate-related error message via the global error handler.
+      - Login succeeds with correct credentials and `/api/v1/auth/me` works with a Bearer token.
+      - Login with wrong password returns 401 JSON error (no stack traces).
+      - `/api/v1/auth/me` must return 401 if a validly signed token references a non-existent (deleted) user, whether provided via Authorization Bearer token or HttpOnly cookie.
+      - Authorization header parsing must be case-insensitive for the scheme; lowercase `bearer <token>` must be accepted by `/api/v1/auth/me`.
+
+    Files you MUST edit (and only these three):
+      1) server.js
+         - Fix the error-handler import so the global error middleware actually loads (import from server/middleware/).
+
+      2) server/models/User.js
+         - In the pre('save') hook, if the password is not modified, call `next()` and immediately `return` to avoid re-hashing unchanged passwords.
+
+      3) server/middleware/auth.js
+         - In `protect()`, after verifying JWT and loading the user, if no user is found, return 401 (Not authorized) instead of proceeding.
+         - Treat the Authorization scheme case-insensitively (accept both `Bearer` and `bearer`).
+
+    Steps:
+      - Run: `./run_tests.sh task-001`.
+      - Fix only the three files above, then re-run until all tests pass.
+      - Create `task_diff.txt` with only those changes.
+
+    Technical requirements:
+      - Preserve existing API routes and response shapes.
+      - JWT accepted from Authorization Bearer header or HttpOnly `token` cookie.
+      - Error responses are JSON with `success: false` and a meaningful `error` message.
+
+    Success criteria:
+      - Exactly eight tests in `tasks/task-001/task_tests.py` pass after your fixes.
+      - Only the three specified files are changed.
+
+difficulty: hard
+category: Bug
+tags: [node, express, mongodb, jwt, auth, testing]
+parser_name: pytest
