@@ -1,11 +1,11 @@
 import React from 'react';
-import { Jumbotron, Container, Button, Row, Col } from 'react-bootstrap';
+import { Container, Button, Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   return (
     <div className="home-page">
-      <Jumbotron className="text-center bg-light py-5 mb-5">
+      <div className="p-5 mb-5 bg-light rounded-3 text-center">
         <Container>
           <h1 className="display-4">Welcome to PuzzleVerse</h1>
           <p className="lead">
@@ -16,20 +16,20 @@ const HomePage = () => {
             This project includes 10 independent tasks, each designed to test and improve the capabilities of large language models.
           </p>
           <div className="mt-4">
-            <Link to="/tasks" className="btn btn-primary btn-lg mr-3">
+            <Link to="/tasks" className="btn btn-primary btn-lg me-3">
               View Tasks
             </Link>
-            <a 
-              href="https://github.com/yourusername/puzzleverse-mern" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href="https://github.com/yourusername/puzzleverse-mern"
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn-outline-secondary btn-lg"
             >
               GitHub Repository
             </a>
           </div>
         </Container>
-      </Jumbotron>
+      </div>
 
       <Container className="features">
         <h2 className="text-center mb-5">Features</h2>
